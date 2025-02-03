@@ -99,8 +99,6 @@ exports.loginUser = async (req, res) => {
 exports.uploadProfileImage = async (req, res) => {
     const id = req.payload._id //user id
     const image = req.files?.image
-
-    console.log("image: ", image);
     
 
     try {

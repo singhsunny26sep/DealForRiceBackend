@@ -12,7 +12,7 @@ exports.generateToken = async (checkUser) => {
 
 exports.verifyToken = async (req, res, next) => {
     let token = req.headers['authorization']
-    console.log("token: ", token);
+    // console.log("token: ", token);
     try {
         if (!token) {
             // console.log("token: ", token);

@@ -7,6 +7,7 @@ const { db } = require('./db/db');
 const cors = require('cors');
 const userRouter = require('./router/user');
 const tradeRouter = require('./router/trade');
+const proRouter = require('./router/product');
 
 db()
 app.use(fileUpload({ useTempFiles: true, tempFileDir: '/tmp/', }));
@@ -18,6 +19,7 @@ app.get('/', (req, res) => res.send('Hello World!'))
 
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/trades', tradeRouter)
+app.use('/api/v1/products', proRouter)
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
