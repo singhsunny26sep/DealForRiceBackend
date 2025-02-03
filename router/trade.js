@@ -10,4 +10,5 @@ tradeRouter.put('/:id', addOrUpdateTrade)
 
 tradeRouter.delete('/:id', deleteTrade)
 
+
 module.exports = tradeRouter

@@ -29,7 +29,9 @@ exports.registorUser = async (req, res) => {
     const mobile = req.body?.mobile
     const password = req.body?.password
     const trade = req.body?.trade
-    // const image = req.files?.image
+    const city = req.body?.city
+    const state = req.body?.state
+    const image = req.files?.image
 
     try {
         const checkUser = await User.findOne({ email })
@@ -51,11 +53,13 @@ exports.registorUser = async (req, res) => {
         if (mongoose.Types.ObjectId.isValid(trade)) {
             user.trade = trade
         }
+        if (city) user.city = city
+        if (state) user.state = state
 
-        /* if (image) {
+        if (image) {
             let imageUrl = await uploadToCloudinary(image.tempFilePath)
             user.image = imageUrl
-        } */
+        }
         const result = await user.save()
         if (result) {
             const token = await generateToken(result)

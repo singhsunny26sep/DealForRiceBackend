@@ -22,6 +22,7 @@ exports.getTrade = async (req, res) => {
     }
 }
 
+
 exports.addOrUpdateTrade = async (req, res) => {
     const name = req.body?.name
     const id = req.params?.id
@@ -41,13 +42,14 @@ exports.addOrUpdateTrade = async (req, res) => {
     }
 };
 
+
 exports.deleteTrade = async (req, res) => {
     const id = req.params?.id
     try {
         if (id) {
             const trade = await Trade.findByIdAndDelete(id);
             if (trade) {
-                return res.status(200).json({ success: true, msg: `Trade deleted successfully` });
+                return res.status(200).json({ success: true, msg: `Trade ${trade?.name} deleted successfully` });
             }
             return res.status(404).json({ success: false, msg: "Trade not found" });
         }

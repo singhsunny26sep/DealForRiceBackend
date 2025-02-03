@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const TradeSchema = new mongoose.Schema({
     name: {
-        type: String
+        type: String,
     },
     description: {
         type: String
