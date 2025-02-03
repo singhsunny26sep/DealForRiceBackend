@@ -11,6 +11,9 @@ exports.userProfile = async (req, res) => {
         if (!id) {
             return res.status(400).json({ error: "User not found", success: false, msg: "User not found" })
         }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "Invalid trade ID", success: false, msg: "Invalid trade ID" });
+        }
         const user = await User.findById(id).populate("trade")
         if (!user) {
             return res.status(404).json({ error: "User not found", success: false, msg: "User not found" })
@@ -94,9 +97,11 @@ exports.loginUser = async (req, res) => {
 }
 
 exports.uploadProfileImage = async (req, res) => {
-    const id = req.params.id //user id
+    const id = req.payload._id //user id
     const image = req.files?.image
 
+    console.log("image: ", image);
+    
 
     try {
         const checkUser = await User.findById(id)
@@ -122,7 +127,7 @@ exports.uploadProfileImage = async (req, res) => {
 
 exports.userUpdate = async (req, res) => {
 
-    const id = req.params.id //user id
+    const id = req.payload._id //user id
     const name = req.body?.name
     const email = req.body?.email
     const mobile = req.body?.mobile

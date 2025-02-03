@@ -10,10 +10,12 @@ userRouter.post('/register', registrationValidation, registorUser)
 
 userRouter.post('/login', loginValidation, loginUser)
 
-userRouter.get('/profile/:id', verifyToken, userProfile)
+userRouter.get('/profile', verifyToken, userProfile)
+// userRouter.get('/profile/:id', verifyToken, userProfile)
 
-userRouter.put('/profile', verifyToken, uploadProfileImage) // update all fields for current user
+userRouter.put('/imageUpdate', verifyToken, uploadProfileImage) // update all fields for current user
 
-userRouter.put('/profile/:id', verifyToken, userUpdate)
+// userRouter.put('/profile/:id', verifyToken, userUpdate)
+userRouter.put('/profile', verifyToken, userUpdate)
 
 module.exports = userRouter
