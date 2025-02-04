@@ -9,6 +9,9 @@ const TradeSchema = new mongoose.Schema({
     },
     tradeType: {
         type: String
+    },
+    image: {
+        type: String
     }
 }, { timestamps: true })
 

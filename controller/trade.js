@@ -1,5 +1,6 @@
 const Trade = require("../model/Trade");
 const mongoose = require('mongoose');
+const { uploadToCloudinary, deleteFromCloudinary } = require("../service/uploadImage");
 
 exports.getTrade = async (req, res) => {
     const id = req.params?.id
@@ -25,13 +26,52 @@ exports.getTrade = async (req, res) => {
 exports.addOrUpdateTrade = async (req, res) => {
     const name = req.body?.name
     const id = req.params?.id
+    const image = req.files?.image
+    console.log("req.params: ", req.params?.id);
 
     try {
-        const result = await Trade.findOneAndUpdate(
+
+        /* let imageUrl
+        if (id) {
+            imageUrl = await uploadToCloudinary(image.tempFilePath)
+        } */
+        /* const result = await Trade.findOneAndUpdate(
             { _id: id || new mongoose.Types.ObjectId() }, // If tradeId exists, update; else, create new
-            { name },
+            { name, image: imageUrl },
             { new: true, upsert: true } // `upsert: true` creates new if not exists
-        );
+        ) */
+        let result
+        if (id) {
+            console.log("if");
+            console.log("trade: ", await Trade.findById(id));
+
+            result = await Trade.findById(id)
+        } else {
+            console.log("else");
+
+            result = new Trade({ name })
+        }
+        console.log("result: ", result);
+
+        console.log("id; ", id);
+        console.log("name: ", name);
+
+
+        console.log("id && name: ", id && name);
+        console.log("result.name: ", result);
+
+
+        if (id && name) result.name = name
+
+        if (image) {
+            if (result.image) {
+                await deleteFromCloudinary(result?.image)
+            }
+            let imageUrl = await uploadToCloudinary(image.tempFilePath)
+            result.image = imageUrl
+        }
+
+        await result.save()
 
         return res.status(200).json({ success: true, msg: id ? `Trade ${name} updated successfully` : `Trade ${name} added successfully`, result });
 
