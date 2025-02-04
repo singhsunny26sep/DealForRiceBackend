@@ -22,7 +22,6 @@ exports.getTrade = async (req, res) => {
     }
 }
 
-
 exports.addOrUpdateTrade = async (req, res) => {
     const name = req.body?.name
     const id = req.params?.id
