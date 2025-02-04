@@ -27,7 +27,6 @@ exports.addOrUpdateTrade = async (req, res) => {
     const name = req.body?.name
     const id = req.params?.id
     const image = req.files?.image
-    console.log("req.params: ", req.params?.id);
 
     try {
 
@@ -42,24 +41,10 @@ exports.addOrUpdateTrade = async (req, res) => {
         ) */
         let result
         if (id) {
-            console.log("if");
-            console.log("trade: ", await Trade.findById(id));
-
             result = await Trade.findById(id)
         } else {
-            console.log("else");
-
             result = new Trade({ name })
         }
-        console.log("result: ", result);
-
-        console.log("id; ", id);
-        console.log("name: ", name);
-
-
-        console.log("id && name: ", id && name);
-        console.log("result.name: ", result);
-
 
         if (id && name) result.name = name
 
