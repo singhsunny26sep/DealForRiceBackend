@@ -32,7 +32,7 @@ exports.getProductByUserId = async (req, res) => {
         if (!checkUser) {
             return res.status(400).json({ success: false, msg: 'User not found!' })
         }
-        const result = await Product.find({ user: id }).populate({ path: "user", select: "-password" }).populate(trade)
+        const result = await Product.find({ user: id }).populate({ path: "user", select: "-password" }).populate("trade")
         if (result) {
             return res.status(200).json({ success: true, msg: "Products found", result });
         }
