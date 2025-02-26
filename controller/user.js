@@ -25,6 +25,26 @@ exports.userProfile = async (req, res) => {
     }
 }
 
+exports.singleUser = async (req, res) => {
+    const id = req.params?.id
+    try {
+        if (!id) {
+            return res.status(400).json({ error: "User not found", success: false, msg: "User not found" })
+        }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "Invalid trade ID", success: false, msg: "Invalid trade ID" });
+        }
+        const user = await User.findById(id).populate("trade")
+        if (!user) {
+            return res.status(404).json({ error: "User not found", success: false, msg: "User not found" })
+        }
+        return res.status(200).json({ success: true, result: user })
+    } catch (error) {
+        console.log("error on userProfile: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
 exports.getAllUserByTrad = async (req, res) => {
     const id = req.params?.id //trade id
     try {
@@ -97,6 +117,10 @@ exports.loginUser = async (req, res) => {
         const checkUser = await User.findOne({ email: email })
         if (!checkUser) {
             return res.status(401).json({ error: "Invalid credentials", success: false, msg: "User not found" })
+        }
+
+        if (checkUser.isActive == false) {
+            return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
         }
         const matchedPass = await bcrypt.compare(password, checkUser.password);
         if (!matchedPass) {
@@ -191,7 +215,7 @@ exports.getAllUserForChat = async (req, res) => {
     const id = req.payload?._id //user id
 
     try {
-        const result = await User.find({ role: "user", _id: { $ne: id } }).sort({ createdAt: -1 }).select("-password -role -__v");
+        const result = await User.find({ role: "user", _id: { $ne: id } }).sort({ createdAt: -1 }).select("-password -role -__v").populate("trade")
 
         if (result) {
             return res.status(200).json({ success: true, result });
@@ -199,6 +223,27 @@ exports.getAllUserForChat = async (req, res) => {
         return res.status(404).json({ success: false, msg: "No users found" });
     } catch (error) {
         console.log("error on getAllUsers: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+exports.changeStatusUser = async (req, res) => {
+    const id = req.params?.id //user id
+    const status = req.body?.status //status (online, offline, busy)
+
+    try {
+        const checkUser = await User.findById(id)
+        if (!checkUser) {
+            return res.status(400).json({ success: false, msg: 'User not found!' })
+        }
+        checkUser.isActive = status
+        const result = await checkUser.save()
+        if (result) {
+            return res.status(200).json({ success: true, msg: 'User status updated successfully', data: result })
+        }
+        return res.status(400).json({ success: false, msg: 'Failed to update user status!' })
+    } catch (error) {
+        console.log("error on changeStatusUser: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }

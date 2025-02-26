@@ -29,16 +29,6 @@ exports.addOrUpdateTrade = async (req, res) => {
     const image = req.files?.image
 
     try {
-
-        /* let imageUrl
-        if (id) {
-            imageUrl = await uploadToCloudinary(image.tempFilePath)
-        } */
-        /* const result = await Trade.findOneAndUpdate(
-            { _id: id || new mongoose.Types.ObjectId() }, // If tradeId exists, update; else, create new
-            { name, image: imageUrl },
-            { new: true, upsert: true } // `upsert: true` creates new if not exists
-        ) */
         let result
         if (id) {
             result = await Trade.findById(id)
