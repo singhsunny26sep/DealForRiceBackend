@@ -1,7 +1,7 @@
 const express = require('express');
 const { registrationValidation, loginValidation } = require('../middleware/userValidation');
 const { verifyToken } = require('../middleware/authValidation');
-const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad } = require('../controller/user');
+const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers } = require('../controller/user');
 const userRouter = express.Router();
 
 // userRouter.get('')
@@ -11,6 +11,8 @@ userRouter.post('/register', registrationValidation, registorUser)
 userRouter.post('/login', loginValidation, loginUser)
 
 userRouter.get('/profile', verifyToken, userProfile)
+
+userRouter.get('/getAll', getAllUsers)
 
 userRouter.get('/trade/:id', getAllUserByTrad)
 // userRouter.get('/profile/:id', verifyToken, userProfile)

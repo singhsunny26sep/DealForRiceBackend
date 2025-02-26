@@ -48,6 +48,14 @@ const UserSchema = new mongoose.Schema({
     image: {
         type: String,
     },
+    isActive: {
+        type: Boolean,
+        default: false
+    },
+    isSubscribed: {
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true })
 const User = mongoose.model('User', UserSchema);
 

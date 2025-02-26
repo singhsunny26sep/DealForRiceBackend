@@ -170,3 +170,18 @@ exports.userUpdate = async (req, res) => {
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
+
+
+exports.getAllUsers = async (req, res) => {
+
+    try {
+        const result = await User.find({ role: "user" }).sort({ createdAt: -1 }).select("-password -role -__v")
+        if (result) {
+            return res.status(200).json({ success: true, result })
+        }
+        return res.status(404).json({ success: false, msg: "No users found" });
+    } catch (error) {
+        console.log("error on getAllUsers: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}

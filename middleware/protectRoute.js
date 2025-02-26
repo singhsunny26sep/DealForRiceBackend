@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../model/User');
+require("dotenv").config()
 
 const protectRoute = async (req, res, next) => {
     // const token = req.cookies.jwt
     let token = req.headers['authorization']
-    // console.log("token: ", token);
 
     try {
         if (!token) {
@@ -12,19 +12,16 @@ const protectRoute = async (req, res, next) => {
         }
 
         let splitToken = token.split(" ")[1]
-        // console.log("split token: ", splitToken);
-
-        const decoded = jwt.verify(splitToken, process.env.SECRET);
+        const decoded = jwt.verify(splitToken, process.env.SECRET_KEY);
         if (!decoded) {
             return res.status(401).json({ message: "Invalid token", success: false });
         }
         // console.log("token: ", decoded);
 
-        const result = await User.findById(decoded.userId).select('-password')
+        const result = await User.findById(decoded._id).select('-password')
         if (!result) {
             return res.status(404).json({ message: "User not found", success: false });
         }
-        // console.log("result: ", result);
 
         req.user = result
         next()
