@@ -185,3 +185,20 @@ exports.getAllUsers = async (req, res) => {
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
+
+
+exports.getAllUserForChat = async (req, res) => {
+    const id = req.payload?._id //user id
+
+    try {
+        const result = await User.find({ role: "user", _id: { $ne: id } }).sort({ createdAt: -1 }).select("-password -role -__v");
+
+        if (result) {
+            return res.status(200).json({ success: true, result });
+        }
+        return res.status(404).json({ success: false, msg: "No users found" });
+    } catch (error) {
+        console.log("error on getAllUsers: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}

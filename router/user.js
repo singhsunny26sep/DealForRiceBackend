@@ -1,7 +1,7 @@
 const express = require('express');
 const { registrationValidation, loginValidation } = require('../middleware/userValidation');
 const { verifyToken } = require('../middleware/authValidation');
-const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers } = require('../controller/user');
+const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat } = require('../controller/user');
 const userRouter = express.Router();
 
 // userRouter.get('')
@@ -21,5 +21,7 @@ userRouter.put('/imageUpdate', verifyToken, uploadProfileImage) // update all fi
 
 // userRouter.put('/profile/:id', verifyToken, userUpdate)
 userRouter.put('/profile', verifyToken, userUpdate)
+
+userRouter.get('/chat/users', verifyToken, getAllUserForChat)
 
 module.exports = userRouter
