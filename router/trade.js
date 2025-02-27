@@ -1,8 +1,12 @@
 const express = require('express');
-const { getTrade, addOrUpdateTrade, deleteTrade } = require('../controller/trade');
+const { getTrade, addOrUpdateTrade, deleteTrade, getPaginationTrand } = require('../controller/trade');
 const tradeRouter = express.Router();
 
 tradeRouter.get('/', getTrade)
+
+tradeRouter.get('/pagination', getPaginationTrand)
+tradeRouter.get('/:id', getTrade)
+
 
 tradeRouter.post('/', addOrUpdateTrade)
 

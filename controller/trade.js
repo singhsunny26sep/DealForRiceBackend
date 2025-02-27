@@ -23,6 +23,39 @@ exports.getTrade = async (req, res) => {
     }
 }
 
+exports.getPaginationTrand = async (req, res) => {
+    let { page, limit, search } = req.query;
+    try {
+
+        // Convert page and limit to numbers, set default values
+        page = parseInt(page) || 1;
+        limit = parseInt(limit) || 10;
+
+        const query = {};
+
+        // If search query exists, filter results
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: "i" } }, // Case-insensitive search
+                { tradeType: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        // Fetch total count for pagination
+        const totalRecords = await Trade.countDocuments(query);
+        const totalPages = Math.ceil(totalRecords / limit);
+
+        // Fetch paginated results
+        const trades = await Trade.find(query).skip((page - 1) * limit).limit(limit).sort({ createdAt: -1 }); // Sort by latest created
+
+        return res.status(200).json({ success: true, trades, currentPage: page, totalPages, totalRecords });
+    } catch (error) {
+        console.error("Error in getPaginationTrand: ", error);
+        return res.status(500).json({ success: false, msg: "Internal Server Error", error: error.message });
+    }
+};
+
+
 exports.addOrUpdateTrade = async (req, res) => {
     const name = req.body?.name
     const id = req.params?.id

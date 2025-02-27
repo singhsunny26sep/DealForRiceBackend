@@ -33,7 +33,6 @@ const TransactionSchema = new mongoose.Schema({
     address: {
         type: String,
     }
-
 }, { timestamps: true })
 
 const Transaction = mongoose.model('Transaction', TransactionSchema)

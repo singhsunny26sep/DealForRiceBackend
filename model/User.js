@@ -55,6 +55,10 @@ const UserSchema = new mongoose.Schema({
     isSubscribed: {
         type: Boolean,
         default: false
+    },
+    subscriptionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'SubscribeHistory'
     }
 }, { timestamps: true })
 const User = mongoose.model('User', UserSchema);

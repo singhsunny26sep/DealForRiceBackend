@@ -11,6 +11,7 @@ const proRouter = require('./router/product');
 const { app, server } = require('./soket/socket.js')
 const messageRouter = require('./router/message.js');
 const routerTransaction = require('./router/transaction.js');
+const subscribeRouter = require('./router/subscription.js');
 
 db()
 app.use(fileUpload({ useTempFiles: true, tempFileDir: '/tmp/', }));
@@ -26,6 +27,7 @@ app.use('/api/v1/trades', tradeRouter)
 app.use('/api/v1/products', proRouter)
 app.use('/api/v1/messages', messageRouter)
 app.use('/api/v1/transactions', routerTransaction)
+app.use('/api/v1/subscriptions', subscribeRouter)
 
 
 server.listen(port, () => {
