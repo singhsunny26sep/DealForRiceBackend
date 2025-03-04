@@ -76,7 +76,7 @@ io.on("connection", (socket) => {
         const roomId = [sender, receiver].sort().join("_");
 
         // Save message in DB
-        const newMessage = new Chat({ roomId, sender, receiver, message });
+        const newMessage = new Chat({ roomId, sender, receiver, message, readBy: { [sender]: true, [receiver]: false } });
         await newMessage.save();
 
         // Update last message for user list
@@ -96,7 +96,7 @@ io.on("connection", (socket) => {
         const roomId = [userId, senderId].sort().join("_");
 
         // Mark messages as seen
-        await Chat.updateMany({ roomId, receiver: userId, seen: false }, { seen: true });
+        await Chat.updateMany({ roomId, receiver: userId, seen: false }, { seen: true, $set: { [`readBy.${userId}`]: true } });
 
         // Reset unread count
         await User.findByIdAndUpdate(userId, { unreadCount: 0 });
