@@ -59,7 +59,10 @@ const UserSchema = new mongoose.Schema({
     subscriptionId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SubscribeHistory'
-    }
+    },
+    lastMessage: String,
+    lastMessageTime: Date,
+    unreadCount: { type: Number, default: 0 }
 }, { timestamps: true })
 const User = mongoose.model('User', UserSchema);
 

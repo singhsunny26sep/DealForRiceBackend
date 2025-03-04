@@ -14,11 +14,11 @@ const routerTransaction = require('./router/transaction.js');
 const subscribeRouter = require('./router/subscription.js');
 
 db()
+app.use(cors({ origin: "*" })); // Allow all origins (you can restrict to specific origins)
 app.use(fileUpload({ useTempFiles: true, tempFileDir: '/tmp/', }));
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
 app.use(express.urlencoded({ extended: true }));
-
 
 app.get('/', (req, res) => res.send('Hello World!'))
 

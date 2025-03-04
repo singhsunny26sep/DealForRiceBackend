@@ -127,6 +127,8 @@ exports.changeStatus = async (req, res) => {
 exports.applySubscription = async (req, res) => {
     const id = req.params?.id; //here will be subscription id
     const userId = req.payload?._id
+    // console.log("================================== applySubscription ==================================");
+    // console.log("id: ", id);
 
     try {
         const checkSubscription = await Subscription.findById(id)
@@ -160,7 +162,7 @@ exports.applySubscription = async (req, res) => {
         // Add months based on the subscription duration
         expirationDate.setMonth(expirationDate.getMonth() + checkSubscription.duration);
 
-        // checkUser.isSubscribed = true;
+        checkUser.isSubscribed = true;
 
 
         const result = await SubscribeHistory.create({ userId, subscriptionId: id, endDate: expirationDate, duration: checkSubscription.duration, amount: checkSubscription?.amount })
@@ -287,7 +289,7 @@ exports.userSubscriptionHistory = async (req, res) => {
     const id = req.params?.id || req.payload?._id
 
     try {
-        const checkUser = await User.findById(id).select("-password -couponId -role").populate("businessType").populate("couponId")
+        const checkUser = await User.findById(id).select("-password -couponId -role").populate("trade")
         if (!checkUser) {
             return res.status(404).json({ success: false, msg: "User not found" });
         }

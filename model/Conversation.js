@@ -21,7 +21,12 @@ const conversation = new mongoose.Schema({
             ref: 'Message',
             default: []
         }
-    ]
+    ],
+    unreadCounts: {
+        type: Map,
+        of: Number, // Key: userId, Value: unread message count
+        default: {}
+    }
 }, { timestamps: true });
 
 const Conversation = mongoose.model('conversation', conversation);

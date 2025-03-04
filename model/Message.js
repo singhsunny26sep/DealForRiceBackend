@@ -14,6 +14,11 @@ const messageSchema = new mongoose.Schema({
     message: {
         type: String,
         required: true
+    },
+    readBy: {
+        type: Map,  // Store read status for both users
+        of: Boolean,
+        default: {}
     }
 }, { timestamps: true });
 
