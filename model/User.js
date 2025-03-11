@@ -60,6 +60,9 @@ const UserSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SubscribeHistory'
     },
+    fcmToken: {
+        type: String,
+    },
     lastMessage: String,
     lastMessageTime: Date,
     unreadCount: { type: Number, default: 0 }

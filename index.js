@@ -12,6 +12,7 @@ const { app, server } = require('./soket/socket.js')
 const messageRouter = require('./router/message.js');
 const routerTransaction = require('./router/transaction.js');
 const subscribeRouter = require('./router/subscription.js');
+const notifyRouter = require('./router/notification.js');
 
 db()
 app.use(cors({ origin: "*" })); // Allow all origins (you can restrict to specific origins)
@@ -28,6 +29,7 @@ app.use('/api/v1/products', proRouter)
 app.use('/api/v1/messages', messageRouter)
 app.use('/api/v1/transactions', routerTransaction)
 app.use('/api/v1/subscriptions', subscribeRouter)
+app.use('/api/v1/notifications', notifyRouter)
 
 
 server.listen(port, () => {

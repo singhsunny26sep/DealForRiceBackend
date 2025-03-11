@@ -114,8 +114,13 @@ exports.registorUser = async (req, res) => {
 
 
 exports.loginUser = async (req, res) => {
+    // console.log("req.body: ", req.body);
+
     const email = req.body?.email
     const password = req.body?.password
+    const fcmToken = req.body?.fcmToken
+    // console.log("fcmToken: ", req.body?.fcmToken);
+
     try {
         const checkUser = await User.findOne({ email: email })
         if (!checkUser) {
@@ -128,6 +133,10 @@ exports.loginUser = async (req, res) => {
         const matchedPass = await bcrypt.compare(password, checkUser.password);
         if (!matchedPass) {
             return res.status(401).json({ success: false, msg: "Invalid credentials" })
+        }
+        if (fcmToken) {
+            checkUser.fcmToken = fcmToken
+            await checkUser.save()
         }
         const token = await generateToken(checkUser)
         return res.status(200).json({ success: true, msg: "User logged in successfully", token })

@@ -1,5 +1,6 @@
 const Product = require("../model/Product");
 const User = require("../model/User");
+const { sendMultipleNotification } = require("../service/notification");
 const { uploadToCloudinary, deleteFromCloudinary } = require("../service/uploadImage")
 const mongoose = require('mongoose');
 
@@ -69,7 +70,10 @@ exports.addProduct = async (req, res) => {
         if (mongoose.Types.ObjectId.isValid(trade)) product.trade = trade
 
         const result = await product.save()
+        // let msgDes = `description`
+        // let title = `${}`
         if (result) {
+            await sendMultipleNotification(name, description, "added", "Product", id)
             return res.status(200).json({ success: true, msg: 'Product added successfully', result })
         }
         return res.status(400).json({ success: false, msg: 'Failed to add product!' })
