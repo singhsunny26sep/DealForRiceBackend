@@ -214,7 +214,7 @@ exports.getAllUsers = async (req, res) => {
 }
 
 
-exports.getAllUserForChat = async (req, res) => {
+/* exports.getAllUserForChat = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.payload?._id); // Current user ID
 
     try {
@@ -291,9 +291,9 @@ exports.getAllUserForChat = async (req, res) => {
         console.error("Error on getAllUsers: ", error);
         return res.status(500).json({ success: false, error: error.message });
     }
-};
+}; */
 
-/* exports.getAllUserForChat = async (req, res) => {
+exports.getAllUserForChat = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.payload?._id); // Current user ID
 
     try {
@@ -333,23 +333,30 @@ exports.getAllUserForChat = async (req, res) => {
                 }
             },
             {
-                $addFields: {
-                    lastMessage: { $arrayElemAt: ["$lastChat.message", 0] },
-                    lastMessageTime: { $arrayElemAt: ["$lastChat.createdAt", 0] },
-                    unreadCount: {
-                        $size: {
-                            $filter: {
-                                input: "$lastChat",
-                                as: "chat",
-                                cond: {
+                $lookup: {
+                    from: "chats",
+                    let: { senderId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
                                     $and: [
-                                        { $eq: [`$$chat.readBy.${userId}`, false] }, // Count messages not read by user
-                                        { $eq: ["$$chat.receiver", userId] } // Only messages received by the user
+                                        { $eq: ["$sender", "$$senderId"] }, // Messages from this user
+                                        { $eq: ["$receiver", userId] }, // To logged-in user
+                                        { $ne: [`$readBy.${userId}`, true] } // Unread messages
                                     ]
                                 }
                             }
                         }
-                    }
+                    ],
+                    as: "unreadMessages"
+                }
+            },
+            {
+                $addFields: {
+                    lastMessage: { $arrayElemAt: ["$lastChat.message", 0] },
+                    lastMessageTime: { $arrayElemAt: ["$lastChat.createdAt", 0] },
+                    unreadCount: { $size: "$unreadMessages" } // Count all unread messages
                 }
             },
             {
@@ -357,7 +364,8 @@ exports.getAllUserForChat = async (req, res) => {
                     password: 0,
                     role: 0,
                     __v: 0,
-                    lastChat: 0
+                    lastChat: 0,
+                    unreadMessages: 0
                 }
             },
             {
@@ -370,8 +378,7 @@ exports.getAllUserForChat = async (req, res) => {
         console.error("Error on getAllUsers: ", error);
         return res.status(500).json({ success: false, error: error.message });
     }
-}; */
-
+};
 
 
 
