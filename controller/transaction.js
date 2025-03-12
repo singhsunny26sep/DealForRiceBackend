@@ -3,6 +3,18 @@ const Transaction = require("../model/Transaction")
 const User = require("../model/User")
 
 
+exports.getAll = async (req, res) => {
+    try {
+        const result = await Transaction.find().sort({ createdAt: -1 }).populate("buyerId", "name email mobile image").populate("sellerId", "name email mobile image")
+        if (result) {
+            return res.status(200).json({ success: true, result });
+        }
+        return res.status(404).json({ success: false, msg: "No transactions found" });
+    } catch (error) {
+        console.error("Error in getAll: ", error);
+        return res.status(500).json({ success: false, msg: "Internal Server Error", error: error.message });
+    }
+}
 
 exports.createTransaction = async (req, res) => {
     const id = req.params?.id
