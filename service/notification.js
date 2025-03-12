@@ -7,7 +7,7 @@ admin.initializeApp({
 })
 
 
-exports.sendSingleNotification = async (title, description, userId, fcmToken, action, targetType) => {
+exports.sendSingleNotification = async (title, description, userId, fcmToken, action, targetType, image) => {
     const messageC = {
         notification: {
             title: title,

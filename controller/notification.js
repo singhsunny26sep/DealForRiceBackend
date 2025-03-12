@@ -1,4 +1,5 @@
 const Notification = require("../model/Notification");
+const { sendSingleNotification } = require("../service/notification");
 
 
 exports.getNotification = async (req, res) => {
@@ -18,8 +19,10 @@ exports.getNotification = async (req, res) => {
 
 exports.sendTestNotification = async (req, res) => {
     const msg = req.body?.msg
+    const fcmToken = req.body?.fcmToken
     try {
-
+        await sendSingleNotification(msg, msg, "67b72a2e3b5e80bd0a6c44dc", fcmToken, "notification", "Notification")
+        return res.status(200).json({ success: true, msg: "Notification sent successfully" });
     } catch (error) {
         console.log("error on sendTestNotification: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
