@@ -1,10 +1,12 @@
 const express = require('express');
 const { registrationValidation, loginValidation } = require('../middleware/userValidation');
 const { verifyToken } = require('../middleware/authValidation');
-const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser } = require('../controller/user');
+const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails } = require('../controller/user');
 const userRouter = express.Router();
 
 // userRouter.get('')
+
+userRouter.get('/dashboard', verifyToken, dashboardDetails)
 
 userRouter.post('/register', registrationValidation, registorUser)
 

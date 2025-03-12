@@ -6,7 +6,35 @@ const { deleteFromCloudinary, uploadToCloudinary } = require("../service/uploadI
 const Conversation = require("../model/Conversation");
 const Chat = require("../model/Chat");
 const Message = require("../model/Message");
+const Product = require("../model/Product");
+const Trade = require("../model/Trade");
+const SubscribeHistory = require("../model/SubscribeHistory");
+const Transaction = require("../model/Transaction");
 let salt = 10;
+
+exports.dashboardDetails = async (req, res) => {
+
+    try {
+        const [user, active, inactive, subscribedUser, product, trade, subscribeHistory, transactionCompleted, transactionPending, transactionCancelled] = await Promise.all([
+            User.countDocuments({ role: 'user' }),
+            User.countDocuments({ role: 'user', isActive: true }),
+            User.countDocuments({ role: 'user', isActive: false }),
+            User.countDocuments({ role: 'user', isSubscribed: true }),
+            Product.countDocuments(),
+            Trade.countDocuments(),
+            SubscribeHistory.countDocuments({ status: "active" }),
+            Transaction.countDocuments({ status: "completed" }),
+            Transaction.countDocuments({ status: "pending" }),
+            Transaction.countDocuments({ status: "cancelled" }),
+            // Rate.countDocuments()
+        ]);
+
+        return res.status(200).json({ msg: "Ok", success: true, user, active, inactive, subscribedUser, product, trade, subscribeHistory, transactionCompleted, transactionPending, transactionCancelled })
+    } catch (error) {
+        console.log("error on dashboardDetails: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
 
 exports.userProfile = async (req, res) => {
     const id = req.params?.id || req.payload?._id
