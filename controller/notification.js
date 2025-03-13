@@ -22,6 +22,8 @@ exports.sendTestNotification = async (req, res) => {
     const fcmToken = req.body?.fcmToken
     try {
         await sendSingleNotification(msg, msg, "67b72a2e3b5e80bd0a6c44dc", fcmToken, "notification", "Notification")
+        console.log(" ======================================== notification sent ========================================");
+
         return res.status(200).json({ success: true, msg: "Notification sent successfully" });
     } catch (error) {
         console.log("error on sendTestNotification: ", error);

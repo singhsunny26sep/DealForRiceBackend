@@ -6,13 +6,13 @@ exports.getSubscriptions = async (req, res) => {
     const id = req.params?.id
     try {
         if (id) {
-            const subscription = await Subscription.findById(id)
+            const subscription = await Subscription.findById(id).populate("trade")
             if (!subscription) {
                 return res.status(404).json({ success: false, msg: "Subscription not found" });
             }
             return res.status(200).json({ success: true, msg: "Subscription found", result: subscription });
         }
-        const subscriptions = await Subscription.find().sort({ createdAt: -1 })
+        const subscriptions = await Subscription.find().sort({ createdAt: -1 }).populate("trade")
         if (!subscriptions) {
             return res.status(404).json({ success: false, msg: "No subscriptions found" });
         }
@@ -25,7 +25,7 @@ exports.getSubscriptions = async (req, res) => {
 
 exports.getActiveSubscriptions = async (req, res) => {
     try {
-        const result = await Subscription.find({ isActive: true }).sort({ createdAt: -1 })
+        const result = await Subscription.find({ isActive: true }).sort({ createdAt: -1 }).populate("trade")
         if (!result) {
             return res.status(404).json({ success: false, msg: "No active subscriptions found" });
         }
@@ -41,9 +41,10 @@ exports.addSubscription = async (req, res) => {
     const amount = req.body?.amount
     const description = req.body?.description
     const duration = req.body?.duration
+    const trade = req.body?.trade
     try {
 
-        const result = await Subscription.create({ name, amount, description, duration })
+        const result = await Subscription.create({ name, amount, description, duration, trade })
         if (result) {
             return res.status(201).json({ success: true, msg: "Subscription added successfully", result });
         }
@@ -61,6 +62,7 @@ exports.updateSubscription = async (req, res) => {
     const amount = req.body?.amount
     const description = req.body?.description
     const duration = req.body?.duration
+    const trade = req.body?.trade
 
     try {
         const checkSubscription = await Subscription.findById(id)
@@ -71,6 +73,7 @@ exports.updateSubscription = async (req, res) => {
         if (amount) checkSubscription.amount = amount
         if (description) checkSubscription.description = description
         if (duration) checkSubscription.duration = duration
+        if (trade) checkSubscription.trade = trade
         const result = await checkSubscription.save()
         if (result) {
             return res.status(200).json({ success: true, msg: "Subscription updated successfully", result });

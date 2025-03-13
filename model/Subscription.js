@@ -17,6 +17,10 @@ const SubscriptionSchema = new mongoose.Schema({
     duration: {
         type: Number,
         default: 12  // months by default (1 year)
+    },
+    trade: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Trade'
     }
 }, { timestamps: true })
 
