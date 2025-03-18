@@ -333,11 +333,23 @@ exports.getAllUsers = async (req, res) => {
 exports.getAllUserForChat = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.payload?._id); // Current user ID
 
+    // const matchQuery = { role: "user", _id: { $ne: userId } };
+    const tradeId = req.query.tradeId
+    // If tradeId is provided, filter users by tradeId
+
     try {
+
+        const matchQuery = { role: "user", _id: { $ne: userId } };
+
+
+        if (tradeId) {
+            matchQuery.trade = new mongoose.Types.ObjectId(tradeId)
+        }
         const usersWithLastMessage = await User.aggregate([
-            {
+            /* {
                 $match: { role: "user", _id: { $ne: userId } } // Exclude the logged-in user
-            },
+            }, */
+            { $match: matchQuery }, // Match users based on role and tradeId conditionally
             {
                 $lookup: {
                     from: "chats",
@@ -409,6 +421,7 @@ exports.getAllUserForChat = async (req, res) => {
                 $sort: { lastMessageTime: -1 } // Sort by latest message time
             }
         ]);
+        // console.log("usersWithLastMessage: ", usersWithLastMessage);
 
         return res.status(200).json({ success: true, result: usersWithLastMessage });
     } catch (error) {

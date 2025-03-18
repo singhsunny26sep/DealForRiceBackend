@@ -21,7 +21,21 @@ exports.getAllProducts = async (req, res) => {
         }
         return res.status(200).json({ success: true, msg: "All products found", result });
     } catch (error) {
-        console.log("error on addProduct: ", error);
+        console.log("error on getAllProducts: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+
+exports.getLatestProducts = async (req, res) => {
+    try {
+        const result = await Product.find().sort({ createdAt: -1 }).limit(5).populate({ path: "user", select: "-password -createdAt -updatedAt -__v -role" }).populate("trade")
+        if (!result) {
+            return res.status(404).json({ success: false, msg: "No products found" });
+        }
+        return res.status(200).json({ success: true, msg: "Latest products found", result });
+    } catch (error) {
+        console.log("error on getLatestProducts: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
@@ -55,6 +69,9 @@ exports.addProduct = async (req, res) => {
     const id = req.payload?._id //uesr id of created product
     const trade = req.body?.trade
 
+    // console.log("req.body: ", req.body);
+
+
     try {
         if (!name) {
             return res.status(400).json({ success: false, msg: 'Name is required!' })
@@ -70,8 +87,6 @@ exports.addProduct = async (req, res) => {
         if (mongoose.Types.ObjectId.isValid(trade)) product.trade = trade
 
         const result = await product.save()
-        // let msgDes = `description`
-        // let title = `${}`
         if (result) {
             await sendMultipleNotification(name, description, "added", "Product", id)
             return res.status(200).json({ success: true, msg: 'Product added successfully', result })
@@ -82,6 +97,46 @@ exports.addProduct = async (req, res) => {
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
+
+exports.getAdminProduct = async (req, res) => {
+    try {
+        // Fetch products where user is "admin" with pagination
+        const userIds = await User.find({ role: 'admin' })
+        const result = await Product.find({ user: userIds }).populate({ path: 'user', select: 'name email mobile address city state image', }).populate("trade")
+        // const products = await Product.find().populate({ path: 'user', match: { role: 'admin' }, select: 'name email mobile address city state image', })
+        // const result = products.filter(product => product.user !== null); products
+        if (result) {
+            return res.status(200).json({ success: true, result });
+        }
+        return res.status(404).json({ success: false, msg: "No products found" });
+    } catch (error) {
+        console.log("error on getAdminProduct: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+/* exports.getAdminProduct = async (req, res) => {
+    try {
+
+        let { page = 1, limit = 10 } = req.query; // Default page = 1, limit = 10
+        page = parseInt(page);
+        limit = parseInt(limit);
+        const skip = (page - 1) * limit;
+
+        // Fetch products where user is "admin" with pagination
+        const result = await Product.find().populate({ path: 'user', match: { role: 'admin' }, select: 'name email mobile address city state image', }).skip(skip).limit(limit);
+        // const totalRecords = await Trade.countDocuments(query);
+        const totalPages = Math.ceil(result?.length / limit);
+
+        // res.status(200).json(filteredProducts);
+        if (result) {
+            return res.status(200).json({ success: true, result, currentPage: page, totalPages, totalRecords: result?.length });
+        }
+        return res.status(404).json({ success: false, msg: "No products found" });
+    } catch (error) {
+        console.log("error on getAdminProduct: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+} */
 
 exports.updateProduct = async (req, res) => {
     const id = req.params?.id // product id
