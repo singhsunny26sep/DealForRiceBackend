@@ -154,7 +154,7 @@ exports.updateProduct = async (req, res) => {
         if (name) checkProduct.name
         if (description) checkProduct.description
         if (price) checkProduct.price
-        if (mongoose.Types.ObjectId.isValid(trade)) checkProduct.trade
+        if (mongoose.Types.ObjectId.isValid(trade)) checkProduct.trade = trade
 
         if (image) {
             if (checkProduct.image) {
