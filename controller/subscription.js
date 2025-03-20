@@ -36,7 +36,26 @@ exports.getActiveSubscriptions = async (req, res) => {
     }
 }
 
+exports.subscriptionListWithUser = async (req, res) => {
+    const userId = req.payload?._id
+    try {
+        const checkUser = await User.findById(userId)
+        if (!checkUser) {
+            return res.status(404).json({ success: false, msg: "User not found" });
+        }
+        const result = await Subscription.find({ isActive: true, trade: checkUser.trade })
+        if (!result) {
+            return res.status(404).json({ success: false, msg: "No active subscriptions found for this trade" });
+        }
+        return res.status(200).json({ success: true, msg: "Active subscriptions found for this trade", result });
+    } catch (error) {
+        console.error("Error on subscriptionListWithUser: ", error);
+        return res.status(500).json({ success: false, msg: "Internal Server Error", error: error.message });
+    }
+}
+
 exports.addSubscription = async (req, res) => {
+
     const name = req.body?.name
     const amount = req.body?.amount
     const description = req.body?.description

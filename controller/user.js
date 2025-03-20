@@ -10,6 +10,7 @@ const Product = require("../model/Product");
 const Trade = require("../model/Trade");
 const SubscribeHistory = require("../model/SubscribeHistory");
 const Transaction = require("../model/Transaction");
+const { sendOTP, verifyOTP, urlSendTestOtp, urlVerifyOtp } = require("../service/sendOTP");
 let salt = 10;
 
 exports.dashboardDetails = async (req, res) => {
@@ -174,6 +175,61 @@ exports.loginUser = async (req, res) => {
     }
 }
 
+exports.loginWithMobile = async (req, res) => {
+    // console.log("req.body: ", req.body);
+
+    const mobile = req.body?.mobile
+    try {
+        const checkUser = await User.findOne({ mobile: mobile })
+        if (!checkUser) {
+            return res.status(404).json({ success: false, msg: "User not found" })
+        }
+        if (checkUser.isActive == false) {
+            return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
+        }
+        let result = await urlSendTestOtp(mobile)
+        // console.log("result", result);
+        // console.log("result.status == ", result.status == "Success");
+
+        if (result.Status == 'Success') {
+            return res.status(200).json({ success: true, msg: "Verification code sent successfully", result })
+        }
+        return res.status(400).json({ success: false, msg: "Failed to send verification code" })
+    } catch (error) {
+        console.log("error on loginWithMobile: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+exports.verifyOTPAPI = async (req, res) => {
+    const sessionId = req.params.sessionId
+    const otp = req.params.otp
+    const mobile = req.body?.mobile
+    try {
+
+        const checkUser = await User.findOne({ mobile })
+        if (!checkUser) {
+            return res.status(404).json({ success: false, msg: 'User not found' })
+        }
+        if (checkUser.isActive == false) {
+            return res.status(401).json({ success: false, msg: 'Account is not active. Please contact with admin.' })
+        }
+
+        let result = await urlVerifyOtp(sessionId, otp)
+        console.log("result: ", result);
+
+        if (result.Status == 'Success') {
+            const token = await generateToken(checkUser)
+            return res.status(200).json({ success: true, msg: 'Verification successful', data: result, token })
+        }
+        return res.status(400).json({ success: false, msg: 'Verification failed' })
+
+    } catch (error) {
+        console.log("error on verifyOTP: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
 exports.uploadProfileImage = async (req, res) => {
     const id = req.payload._id //user id
     const image = req.files?.image
@@ -249,86 +305,6 @@ exports.getAllUsers = async (req, res) => {
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
-
-
-/* exports.getAllUserForChat = async (req, res) => {
-    const userId = new mongoose.Types.ObjectId(req.payload?._id); // Current user ID
-
-    try {
-        const usersWithLastMessage = await User.aggregate([
-            {
-                $match: { role: "user", _id: { $ne: userId } } // Exclude the logged-in user
-            },
-            {
-                $lookup: {
-                    from: "chats",
-                    let: { userId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $or: [
-                                        {
-                                            $and: [
-                                                { $eq: ["$sender", userId] },
-                                                { $eq: ["$receiver", "$$userId"] }
-                                            ]
-                                        },
-                                        {
-                                            $and: [
-                                                { $eq: ["$receiver", userId] },
-                                                { $eq: ["$sender", "$$userId"] }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        },
-                        { $sort: { createdAt: -1 } }, // Get the latest message
-                        { $limit: 1 }
-                    ],
-                    as: "lastChat"
-                }
-            },
-            {
-                $addFields: {
-                    lastMessage: { $arrayElemAt: ["$lastChat.message", 0] },
-                    lastMessageTime: { $arrayElemAt: ["$lastChat.createdAt", 0] },
-                    unreadCount: {
-                        $size: {
-                            $filter: {
-                                input: "$lastChat",
-                                as: "chat",
-                                cond: {
-                                    $and: [
-                                        { $ne: [`$$chat.sender`, userId] }, // Only count unread messages sent by others
-                                        { $eq: [`$$chat.readBy.${userId}`, false] } // Check if `readBy[userId]` is false
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                $project: {
-                    password: 0,
-                    role: 0,
-                    __v: 0,
-                    lastChat: 0
-                }
-            },
-            {
-                $sort: { lastMessageTime: -1 } // Sort by latest message time
-            }
-        ]);
-
-        return res.status(200).json({ success: true, result: usersWithLastMessage });
-    } catch (error) {
-        console.error("Error on getAllUsers: ", error);
-        return res.status(500).json({ success: false, error: error.message });
-    }
-}; */
 
 exports.getAllUserForChat = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.payload?._id); // Current user ID
@@ -450,6 +426,35 @@ exports.changeStatusUser = async (req, res) => {
         return res.status(400).json({ success: false, msg: 'Failed to update user status!' })
     } catch (error) {
         console.log("error on changeStatusUser: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+
+exports.sendTestOtp = async (req, res) => {
+    const mobile = req.body?.mobile
+    try {
+        let result = await urlSendTestOtp(mobile)
+        console.log("result: ", result);
+
+        return res.status(200).json({ success: false, msg: 'Failed to update user status!', result })
+    } catch (error) {
+        console.log("error on sendTestOtp: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+exports.verifyOTPTest = async (req, res) => {
+    const mobile = req.body?.mobile
+    const otp = req.body?.otp
+    const sessionId = req.body?.sessionId
+    try {
+
+        // let result = await verifyOTP(sessionId, otp)
+        let result = await urlVerifyOtp(sessionId, otp)
+        return res.status(400).json({ success: false, msg: 'Failed to update user status!', result })
+    } catch (error) {
+        console.log("error on verifyOTP: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }

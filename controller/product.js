@@ -139,6 +139,7 @@ exports.getAdminProduct = async (req, res) => {
 } */
 
 exports.updateProduct = async (req, res) => {
+
     const id = req.params?.id // product id
     const user = req.payload?._id // user id
     const name = req.body?.name
@@ -147,22 +148,32 @@ exports.updateProduct = async (req, res) => {
     const image = req.files?.image
     const trade = req.body?.trade
     try {
-        const checkProduct = await Product.findOne({ _id: id, user: user })
+        let query = { _id: id }
+
+        const checkUser = await User.findById(user)
+        if (checkUser.role !== 'admin') {
+            query.user = user
+        }
+
+        const checkProduct = await Product.findOne(query)
         if (!checkProduct) {
             return res.status(404).json({ success: false, msg: 'Product not found!' })
         }
-        if (name) checkProduct.name
-        if (description) checkProduct.description
-        if (price) checkProduct.price
+
+        if (name) checkProduct.name = name
+        if (description) checkProduct.description = description
+        if (price) checkProduct.price = price
         if (mongoose.Types.ObjectId.isValid(trade)) checkProduct.trade = trade
 
         if (image) {
             if (checkProduct.image) {
-                await deleteFromCloudinary(checkUser?.image)
+                await deleteFromCloudinary(checkProduct?.image)
             }
             let imageUrl = await uploadToCloudinary(image.tempFilePath)
             checkProduct.image = imageUrl
         }
+
+
         const result = await checkProduct.save()
         if (result) {
             return res.status(200).json({ success: true, msg: 'Product updated successfully', result })
