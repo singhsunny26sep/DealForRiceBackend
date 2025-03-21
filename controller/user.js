@@ -188,9 +188,6 @@ exports.loginWithMobile = async (req, res) => {
             return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
         }
         let result = await urlSendTestOtp(mobile)
-        // console.log("result", result);
-        // console.log("result.status == ", result.status == "Success");
-
         if (result.Status == 'Success') {
             return res.status(200).json({ success: true, msg: "Verification code sent successfully", result })
         }
@@ -216,8 +213,6 @@ exports.verifyOTPAPI = async (req, res) => {
         }
 
         let result = await urlVerifyOtp(sessionId, otp)
-        console.log("result: ", result);
-
         if (result.Status == 'Success') {
             const token = await generateToken(checkUser)
             return res.status(200).json({ success: true, msg: 'Verification successful', data: result, token })
@@ -444,17 +439,38 @@ exports.sendTestOtp = async (req, res) => {
     }
 }
 
-exports.verifyOTPTest = async (req, res) => {
+exports.resetPassword = async (req, res) => {
     const mobile = req.body?.mobile
     const otp = req.body?.otp
     const sessionId = req.body?.sessionId
+    const password = req.body?.password
     try {
-
+        const checkUser = await User.findOne({ mobile })
+        if (!checkUser) {
+            return res.status(400).json({ success: false, msg: 'User not found!' })
+        }
         // let result = await verifyOTP(sessionId, otp)
         let result = await urlVerifyOtp(sessionId, otp)
-        return res.status(400).json({ success: false, msg: 'Failed to update user status!', result })
+        if (result.Status == "Success") {
+            const hashedPass = await bcrypt.hash(password, parseInt(salt));
+            checkUser.password = hashedPass
+
+            await checkUser.save()
+            return res.status(200).json({ success: true, msg: 'OTP verified successfully!', result })
+        }
+        return res.status(400).json({ success: false, msg: 'Failed to verify OTP!', result })
     } catch (error) {
         console.log("error on verifyOTP: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
+
+/* exports.resetPassword = async (req, res) => {
+    const
+    try {
+
+    } catch (error) {
+        console.log("error on resetPassword: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+} */

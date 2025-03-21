@@ -1,7 +1,7 @@
 const express = require('express');
 const { registrationValidation, loginValidation } = require('../middleware/userValidation');
 const { verifyToken } = require('../middleware/authValidation');
-const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI } = require('../controller/user');
+const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI, resetPassword } = require('../controller/user');
 const userRouter = express.Router();
 
 // userRouter.get('')
@@ -13,6 +13,8 @@ userRouter.post('/register', registrationValidation, registorUser)
 userRouter.post('/login', loginValidation, loginUser)
 
 userRouter.post('/loginWithMobile', loginWithMobile)
+
+userRouter.post('/resetPassword', resetPassword)
 
 userRouter.post('/verify/otp', verifyOTPAPI)
 
@@ -35,6 +37,7 @@ userRouter.put('/approve/user/:id', verifyToken, changeStatusUser)
 userRouter.get('/userProfile/:id', verifyToken, singleUser)
 
 userRouter.post('/testOTPSend', sendTestOtp)
-userRouter.post('/testOTPVerify', verifyOTPTest)
+
+// userRouter.post('/testOTPVerify', verifyOTPTest)
 
 module.exports = userRouter
