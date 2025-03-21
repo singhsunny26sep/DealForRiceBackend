@@ -59,7 +59,7 @@ exports.urlSendTestOtp = async (mobile) => {
 };
 
 
-exports.urlVerifyOtp = async (sessionId, otp) => {
+/* exports.urlVerifyOtp = async (sessionId, otp) => {
     var config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -68,8 +68,28 @@ exports.urlVerifyOtp = async (sessionId, otp) => {
     };
 
     axios(config).then(function async(response) {
-        // console.log("Respones: ", JSON.stringify(response.data));
+        console.log("Respones: ", JSON.stringify(response.data));
+        return JSON.stringify(response.data)
     }).catch(function (error) {
-        console.log(error);
+        console.log("error: ", error);
+        throw error; // Ensure the error is propagated
     });
-}
+} */
+
+exports.urlVerifyOtp = async (sessionId, otp) => {
+    try {
+        const config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `https://2factor.in/API/V1/${APIKEY}/SMS/VERIFY/${sessionId}/${otp}`,
+            headers: {}
+        };
+
+        const response = await axios(config);
+        // console.log("Response: ", response.data);
+        return response.data; // Return the actual data
+    } catch (error) {
+        console.log("Error: ", error.message);
+        throw error; // Ensure the error is propagated
+    }
+};

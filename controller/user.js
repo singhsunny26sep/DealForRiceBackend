@@ -199,12 +199,19 @@ exports.loginWithMobile = async (req, res) => {
 }
 
 exports.verifyOTPAPI = async (req, res) => {
-    const sessionId = req.params.sessionId
-    const otp = req.params.otp
+    // console.log("req.body: ", req.body);
+
+    const sessionId = req.body.sessionId
+    const otp = req.body.otp
     const mobile = req.body?.mobile
+
+    // console.log("mobile: ", mobile);
+    // console.log("sessionId: ", sessionId);
+    // console.log("otp: ", otp);
+
     try {
 
-        const checkUser = await User.findOne({ mobile })
+        const checkUser = await User.findOne({ mobile: mobile })
         if (!checkUser) {
             return res.status(404).json({ success: false, msg: 'User not found' })
         }
@@ -213,7 +220,9 @@ exports.verifyOTPAPI = async (req, res) => {
         }
 
         let result = await urlVerifyOtp(sessionId, otp)
-        if (result.Status == 'Success') {
+        // console.log("result: ", result);
+
+        if (result?.Status == 'Success') {
             const token = await generateToken(checkUser)
             return res.status(200).json({ success: true, msg: 'Verification successful', data: result, token })
         }
