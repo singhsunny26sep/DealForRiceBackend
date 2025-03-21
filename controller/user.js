@@ -198,12 +198,41 @@ exports.loginWithMobile = async (req, res) => {
     }
 }
 
+exports.mobileLogin = async (req, res) => {
+    const mobile = req.body?.mobile
+    const password = req.body?.password
+    const fcmToken = req.body?.fcmToken
+    try {
+        const checkUser = await User.findOne({ mobile })
+        if (!checkUser) {
+            return res.status(404).json({ success: false, msg: "User not found" })
+        }
+        if (checkUser.isActive == false) {
+            return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
+        }
+        const matchedPass = await bcrypt.compare(password, checkUser.password);
+        if (!matchedPass) {
+            return res.status(401).json({ success: false, msg: "Invalid credentials" })
+        }
+        if (fcmToken) {
+            checkUser.fcmToken = fcmToken
+            await checkUser.save()
+        }
+        const token = await generateToken(checkUser)
+        return res.status(200).json({ success: true, msg: "User logged in successfully", token })
+    } catch (error) {
+        console.log("error on mobileLogin: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
 exports.verifyOTPAPI = async (req, res) => {
     // console.log("req.body: ", req.body);
 
     const sessionId = req.body.sessionId
     const otp = req.body.otp
     const mobile = req.body?.mobile
+    const fcmToken = req.body?.fcmToken
 
     // console.log("mobile: ", mobile);
     // console.log("sessionId: ", sessionId);
@@ -221,7 +250,10 @@ exports.verifyOTPAPI = async (req, res) => {
 
         let result = await urlVerifyOtp(sessionId, otp)
         // console.log("result: ", result);
-
+        if (fcmToken) {
+            checkUser.fcmToken = fcmToken
+            await checkUser.save()
+        }
         if (result?.Status == 'Success') {
             const token = await generateToken(checkUser)
             return res.status(200).json({ success: true, msg: 'Verification successful', data: result, token })
@@ -465,7 +497,7 @@ exports.resetPassword = async (req, res) => {
             checkUser.password = hashedPass
 
             await checkUser.save()
-            return res.status(200).json({ success: true, msg: 'OTP verified successfully!', result })
+            return res.status(200).json({ success: true, msg: 'Password reset successfully!', result })
         }
         return res.status(400).json({ success: false, msg: 'Failed to verify OTP!', result })
     } catch (error) {
@@ -473,13 +505,3 @@ exports.resetPassword = async (req, res) => {
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
-
-/* exports.resetPassword = async (req, res) => {
-    const
-    try {
-
-    } catch (error) {
-        console.log("error on resetPassword: ", error);
-        return res.status(500).json({ error: error, success: false, msg: error.message })
-    }
-} */
