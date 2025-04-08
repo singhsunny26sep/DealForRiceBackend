@@ -1,10 +1,12 @@
 const express = require('express');
 const { registrationValidation, loginValidation } = require('../middleware/userValidation');
 const { verifyToken } = require('../middleware/authValidation');
-const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI, resetPassword, mobileLogin } = require('../controller/user');
+const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI, resetPassword, mobileLogin, checkSubscription } = require('../controller/user');
 const userRouter = express.Router();
 
 // userRouter.get('')
+
+userRouter.get('/subscriptionDetails', verifyToken, checkSubscription)
 
 userRouter.get('/dashboard', verifyToken, dashboardDetails)
 

@@ -11,7 +11,59 @@ const Trade = require("../model/Trade");
 const SubscribeHistory = require("../model/SubscribeHistory");
 const Transaction = require("../model/Transaction");
 const { sendOTP, verifyOTP, urlSendTestOtp, urlVerifyOtp } = require("../service/sendOTP");
+const Subscription = require("../model/Subscription");
 let salt = 10;
+
+
+exports.checkSubscription = async (req, res) => {
+    const id = req.payload?._id;
+    try {
+        const user = await User.findById(id).select(" -otp -__v -password").populate("subscription");
+
+        let isSubscriptionActive = false;
+        const currentDate = new Date();
+
+        // Free trial logic
+        if (!user.subscriptionId) {
+            const freeTrialEndDate = new Date(user.createdAt);
+            freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 8); // 8-day trial
+
+            if (currentDate <= freeTrialEndDate) {
+                isSubscriptionActive = true;
+            } else {
+                user.isSubscribed = false;
+                isSubscriptionActive = false;
+                await user.save();
+            }
+        }
+
+        // If user has a subscription
+        if (user.isSubscribed && user.subscriptionId) {
+            const checkSubscriptionHistory = await SubscribeHistory.findById(user.subscriptionId);
+            if (!checkSubscriptionHistory) {
+                return res.status(404).json({ success: false, msg: "Subscription history not found" });
+            }
+
+            if (checkSubscriptionHistory.endDate && checkSubscriptionHistory.endDate > currentDate) {
+                isSubscriptionActive = true;
+            } else {
+                isSubscriptionActive = false;
+                user.isSubscribed = false;
+                user.subscriptionId = null;
+                checkSubscriptionHistory.status = "inactive";
+
+                await checkSubscriptionHistory.save();
+                await user.save();
+            }
+        }
+
+        res.status(200).json({ success: true, data: user, isSubscriptionActive });
+    } catch (error) {
+        console.log("error on checkSubscription: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message });
+    }
+};
+
 
 exports.dashboardDetails = async (req, res) => {
 
@@ -129,6 +181,7 @@ exports.registorUser = async (req, res) => {
             let imageUrl = await uploadToCloudinary(image.tempFilePath)
             user.image = imageUrl
         }
+        user.isSubscribed = true
         const result = await user.save()
         if (result) {
             const token = await generateToken(result)
@@ -434,7 +487,6 @@ exports.getAllUserForChat = async (req, res) => {
             }
         ]);
         // console.log("usersWithLastMessage: ", usersWithLastMessage);
-
         return res.status(200).json({ success: true, result: usersWithLastMessage });
     } catch (error) {
         console.error("Error on getAllUsers: ", error);
