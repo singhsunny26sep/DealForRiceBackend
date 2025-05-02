@@ -6,7 +6,7 @@ const UserSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
+        // required: true,
         // unique: true,
         // match: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/
     },
@@ -18,7 +18,7 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        // required: true,
         minlength: 5,
         /* validate: {
             validator: function (value) {
@@ -45,12 +45,18 @@ const UserSchema = new mongoose.Schema({
     state: {
         type: String,
     },
+    country: {
+        type: String,
+    },
+    shopName: {
+        type: String
+    },
     image: {
         type: String,
     },
     isActive: {
         type: Boolean,
-        default: false
+        default: true
     },
     isSubscribed: {
         type: Boolean,

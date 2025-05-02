@@ -194,6 +194,71 @@ exports.registorUser = async (req, res) => {
     }
 }
 
+exports.completeProfile = async (req, res) => {
+    console.log(" ============================== complete profile ==================================");
+
+    const id = req.params?.id
+    const name = req.body?.name
+    const email = req.body?.email
+    const mobile = req.body?.mobile
+    const password = req.body?.password
+    const trade = req.body?.trade
+    const city = req.body?.city
+    const state = req.body?.state
+    const country = req.body?.country
+    const shopName = req.body?.shopName
+    const image = req.files?.image
+
+    // console.log(" id: ", id);
+
+    // console.log("req.body: ", req.body);
+
+    try {
+        const checkUser = await User.findById(id)
+        if (!checkUser) {
+            return res.status(400).json({ error: "User not found!", success: false, msg: "User not found!" })
+        }
+        const hashedPass = await bcrypt.hash(password, parseInt(salt));
+        if (!hashedPass) {
+            return res.status(400).json({ success: false, msg: "Failed to register!" });
+        }
+
+        /* if (role) {
+            if (role === "admin") {
+                return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
+            }
+        } */
+
+        // const user = new User({ name, email, password: hashedPass })
+        if (name) checkUser.name = name
+        if (email) checkUser.email = email
+        if (password) checkUser.password = hashedPass
+        if (mongoose.Types.ObjectId.isValid(trade)) {
+            checkUser.trade = trade
+        }
+        if (mobile) checkUser.mobile = mobile
+        if (city) checkUser.city = city
+        if (state) checkUser.state = state
+        if (country) checkUser.country = country
+        if (shopName) checkUser.shopName = shopName
+
+        if (image) {
+            let imageUrl = await uploadToCloudinary(image.tempFilePath)
+            checkUser.image = imageUrl
+        }
+        checkUser.isSubscribed = true
+        const result = await checkUser.save()
+        if (result) {
+            const token = await generateToken(result)
+            return res.status(200).json({ success: true, msg: `User registered successfully`, result, token })
+        }
+        return res.status(400).json({ error: "Failed to register user", success: false, msg: "Failed to register user" })
+    } catch (error) {
+        console.log("error on registorUser: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
 
 exports.loginUser = async (req, res) => {
     // console.log("req.body: ", req.body);
@@ -206,7 +271,7 @@ exports.loginUser = async (req, res) => {
     try {
         const checkUser = await User.findOne({ email: email })
         if (!checkUser) {
-            return res.status(401).json({ error: "Invalid credentials", success: false, msg: "User not found" })
+            return res.status(401).json({ error: "Invalid credentials", success: false, msg: "Email not register yet please register first with mobile number" })
         }
 
         if (checkUser.isActive == false) {
@@ -233,16 +298,26 @@ exports.loginWithMobile = async (req, res) => {
 
     const mobile = req.body?.mobile
     try {
-        const checkUser = await User.findOne({ mobile: mobile })
+        let isFirst = false
+        let checkUser
+        checkUser = await User.findOne({ mobile: mobile })
+        // console.log("checkUser: ", checkUser);
+
         if (!checkUser) {
-            return res.status(404).json({ success: false, msg: "User not found" })
+            // return res.status(404).json({ success: false, msg: "User not found" })
+            checkUser = new User({ mobile: mobile })
+            isFirst = true
+            await checkUser.save()
         }
-        if (checkUser.isActive == false) {
+        if (!checkUser.trade) {
+            isFirst = true
+        }
+        /* if (checkUser.isActive == false) {
             return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
-        }
+        } */
         let result = await urlSendTestOtp(mobile)
         if (result.Status == 'Success') {
-            return res.status(200).json({ success: true, msg: "Verification code sent successfully", result })
+            return res.status(200).json({ success: true, msg: "Verification code sent successfully", result, isFirst })
         }
         return res.status(400).json({ success: false, msg: "Failed to send verification code" })
     } catch (error) {
@@ -286,6 +361,7 @@ exports.verifyOTPAPI = async (req, res) => {
     const otp = req.body.otp
     const mobile = req.body?.mobile
     const fcmToken = req.body?.fcmToken
+    const isFirst = req.body?.isFirst
 
     // console.log("mobile: ", mobile);
     // console.log("sessionId: ", sessionId);
@@ -300,19 +376,21 @@ exports.verifyOTPAPI = async (req, res) => {
         if (checkUser.isActive == false) {
             return res.status(401).json({ success: false, msg: 'Account is not active. Please contact with admin.' })
         }
+        console.log("otp: ", otp);
 
         let result = await urlVerifyOtp(sessionId, otp)
-        // console.log("result: ", result);
-        if (fcmToken) {
+        console.log("result: ", result);
+        if (fcmToken && result?.Status == 'Success') {
             checkUser.fcmToken = fcmToken
             await checkUser.save()
         }
+        // const token = await generateToken(checkUser)
+        // return res.status(200).json({ success: true, msg: 'Verification successful', result: checkUser, data: "result", token, isFirst })
         if (result?.Status == 'Success') {
             const token = await generateToken(checkUser)
-            return res.status(200).json({ success: true, msg: 'Verification successful', data: result, token })
+            return res.status(200).json({ success: true, msg: 'Verification successful', result: checkUser, data: result, token, isFirst })
         }
         return res.status(400).json({ success: false, msg: 'Verification failed' })
-
     } catch (error) {
         console.log("error on verifyOTP: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
@@ -398,8 +476,17 @@ exports.getAllUsers = async (req, res) => {
 exports.getAllUserForChat = async (req, res) => {
     const userId = new mongoose.Types.ObjectId(req.payload?._id); // Current user ID
 
+    // console.log("req.quer: ", req.query);
+
     // const matchQuery = { role: "user", _id: { $ne: userId } };
     const tradeId = req.query.tradeId
+    const name = req.query?.name
+    const mobile = req.query?.mobile
+    const shopName = req.query?.shopName
+    const city = req.query?.city
+    const state = req.query?.state
+    const country = req.query?.country
+    const address = req.query?.address
     // If tradeId is provided, filter users by tradeId
 
     try {
@@ -410,10 +497,31 @@ exports.getAllUserForChat = async (req, res) => {
         if (tradeId) {
             matchQuery.trade = new mongoose.Types.ObjectId(tradeId)
         }
+        if (name) {
+            matchQuery.name = { $regex: name, $options: 'i' }  // 'i' for case-insensitive
+        }
+        if (mobile) {
+            matchQuery.mobile = { $regex: mobile, $options: 'i' }
+        }
+        if (address) {
+            matchQuery.address = { $regex: address, $options: 'i' }
+        }
+        if (city) {
+            matchQuery.city = { $regex: city, $options: 'i' }
+        }
+        if (state) {
+            matchQuery.state = { $regex: state, $options: 'i' }
+        }
+        if (country) {
+            matchQuery.country = { $regex: country, $options: 'i' }
+        }
+        if (shopName) {
+            matchQuery.shopName = { $regex: shopName, $options: 'i' }
+        }
+
+
+
         const usersWithLastMessage = await User.aggregate([
-            /* {
-                $match: { role: "user", _id: { $ne: userId } } // Exclude the logged-in user
-            }, */
             { $match: matchQuery }, // Match users based on role and tradeId conditionally
             {
                 $lookup: {
@@ -467,7 +575,16 @@ exports.getAllUserForChat = async (req, res) => {
                 }
             },
             {
+                $lookup: {
+                    from: "trades",
+                    localField: "trade",
+                    foreignField: "_id",
+                    as: "tradeDetails"
+                }
+            },
+            {
                 $addFields: {
+                    tradeDetails: { $arrayElemAt: ["$tradeDetails", 0] }, // convert array to object
                     lastMessage: { $arrayElemAt: ["$lastChat.message", 0] },
                     lastMessageTime: { $arrayElemAt: ["$lastChat.createdAt", 0] },
                     unreadCount: { $size: "$unreadMessages" } // Count all unread messages
