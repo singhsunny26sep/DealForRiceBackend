@@ -49,16 +49,17 @@ io.on("connection", (socket) => {
     });
 
     // Handle Sending Messages
-    socket.on("sendMessage", async ({ sender, receiver, message }) => {
+    socket.on("sendMessage", async ({ sender, receiver, message, image }) => {
         // console.log(" ====================================== sendMessage ====================================== ");
         const roomId = [sender, receiver].sort().join("_");
 
         // console.log("sender: ", sender);
         // console.log("receiver: ", receiver);
         // console.log("message: ", message);
+        // console.log("imageUri: ", image);
 
         // Save message in DB
-        const newMessage = new Chat({ roomId, sender, receiver, message, readBy: { [sender]: true, [receiver]: false } });
+        const newMessage = new Chat({ roomId, sender, receiver, message, image, readBy: { [sender]: true, [receiver]: false } });
         await newMessage.save();
 
         // console.log("newMessage: ", newMessage);

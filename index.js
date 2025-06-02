@@ -14,6 +14,7 @@ const routerTransaction = require('./router/transaction.js');
 const subscribeRouter = require('./router/subscription.js');
 const notifyRouter = require('./router/notification.js');
 const bannerRouter = require('./router/banner.js');
+const mediaRouter = require('./router/media.js');
 
 db()
 app.use(cors({ origin: "*" })); // Allow all origins (you can restrict to specific origins)
@@ -32,6 +33,7 @@ app.use('/api/v1/transactions', routerTransaction)
 app.use('/api/v1/subscriptions', subscribeRouter)
 app.use('/api/v1/notifications', notifyRouter)
 app.use('/api/v1/banners', bannerRouter)
+app.use('/api/v1/medias', mediaRouter)
 
 
 server.listen(port, () => {

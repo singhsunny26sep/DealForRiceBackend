@@ -10,6 +10,13 @@ const chatSchema = new mongoose.Schema({
         type: Map,  // Store read status for both users
         of: Boolean,
         default: {} // Default empty object
+    },
+    media: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Media'
+    },
+    image: {
+        type: String
     }
 }, { timestamps: true });
 

@@ -45,7 +45,8 @@ exports.urlSendTestOtp = async (mobile) => {
         var config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `https://2factor.in/API/V1/${APIKEY}/SMS/+91${mobile}/AUTOGEN/OTP1`,
+            // url: `https://2factor.in/API/V1/${APIKEY}/SMS/+91${mobile}/AUTOGEN/OTP1`,
+            url: `https://2factor.in/API/V1/${APIKEY}/SMS/${mobile}/AUTOGEN/OTP1`,
             headers: {}
         };
 

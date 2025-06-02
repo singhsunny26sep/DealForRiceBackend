@@ -164,11 +164,11 @@ exports.registorUser = async (req, res) => {
             return res.status(400).json({ success: false, msg: "Failed to register!" });
         }
 
-        /* if (role) {
-            if (role === "admin") {
-                return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
-            }
-        } */
+        /*  if (role) {
+             if (role === "admin") {
+                 return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
+             }
+         } */
 
         const user = new User({ name, email, mobile, password: hashedPass })
         if (mongoose.Types.ObjectId.isValid(trade)) {
@@ -209,9 +209,9 @@ exports.completeProfile = async (req, res) => {
     const shopName = req.body?.shopName
     const image = req.files?.image
 
-    // console.log(" id: ", id);
+    console.log(" id: ", id);
 
-    // console.log("req.body: ", req.body);
+    console.log("req.body: ", req.body);
 
     try {
         const checkUser = await User.findById(id)
@@ -297,6 +297,8 @@ exports.loginWithMobile = async (req, res) => {
     // console.log("req.body: ", req.body);
 
     const mobile = req.body?.mobile
+    const countryShortName = req.body?.countryShortName
+    const countryCode = req.body?.countryCode
     try {
         let isFirst = false
         let checkUser
@@ -315,6 +317,9 @@ exports.loginWithMobile = async (req, res) => {
         /* if (checkUser.isActive == false) {
             return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
         } */
+        checkUser.countryShortName = countryShortName
+        checkUser.countryCode = countryCode
+        await checkUser.save()
         let result = await urlSendTestOtp(mobile)
         if (result.Status == 'Success') {
             return res.status(200).json({ success: true, msg: "Verification code sent successfully", result, isFirst })
@@ -363,9 +368,9 @@ exports.verifyOTPAPI = async (req, res) => {
     const fcmToken = req.body?.fcmToken
     const isFirst = req.body?.isFirst
 
-    // console.log("mobile: ", mobile);
-    // console.log("sessionId: ", sessionId);
-    // console.log("otp: ", otp);
+    console.log("mobile: ", mobile);
+    console.log("sessionId: ", sessionId);
+    console.log("otp: ", otp);
 
     try {
 
@@ -671,6 +676,24 @@ exports.resetPassword = async (req, res) => {
         return res.status(400).json({ success: false, msg: 'Failed to verify OTP!', result })
     } catch (error) {
         console.log("error on verifyOTP: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+exports.deleteUser = async (req, res) => {
+    const id = req.params?.id
+    try {
+        const checkUser = await User.findById(id)
+        if (!checkUser) {
+            return res.status(400).json({ success: false, msg: 'User not found!' })
+        }
+        const result = await User.findByIdAndDelete(id)
+        if (result) {
+            return res.status(200).json({ success: true, msg: 'User deleted successfully!', result })
+        }
+        return res.status(400).json({ success: false, msg: 'Failed to delete user!' })
+    } catch (error) {
+        console.log("error on deleteUser: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }

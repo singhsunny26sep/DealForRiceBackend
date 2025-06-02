@@ -1,7 +1,7 @@
 const express = require('express');
 const { registrationValidation, loginValidation } = require('../middleware/userValidation');
 const { verifyToken } = require('../middleware/authValidation');
-const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI, resetPassword, mobileLogin, checkSubscription, completeProfile } = require('../controller/user');
+const { registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI, resetPassword, mobileLogin, checkSubscription, completeProfile, deleteUser } = require('../controller/user');
 const userRouter = express.Router();
 
 // userRouter.get('')
@@ -44,6 +44,7 @@ userRouter.get('/userProfile/:id', verifyToken, singleUser)
 
 userRouter.post('/testOTPSend', sendTestOtp)
 
+userRouter.delete('/delete/:id', verifyToken, deleteUser)
 // userRouter.post('/testOTPVerify', verifyOTPTest)
 
 module.exports = userRouter
