@@ -375,6 +375,8 @@ exports.verifyOTPAPI = async (req, res) => {
     try {
 
         const checkUser = await User.findOne({ mobile: mobile })
+        console.log("checkUser: ", checkUser);
+
         if (!checkUser) {
             return res.status(404).json({ success: false, msg: 'User not found' })
         }
