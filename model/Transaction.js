@@ -4,26 +4,26 @@ const TransactionSchema = new mongoose.Schema({
     buyerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        // required: true
     },
     sellerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        // required: true
     },
     productId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
-        required: true
+        // required: true
     },
     quantity: {
         type: Number,
-        required: true,
+        // required: true,
         default: 1
     },
     price: {
         type: Number,
-        required: true,
+        // required: true,
     },
     status: {
         type: String,
@@ -32,7 +32,10 @@ const TransactionSchema = new mongoose.Schema({
     },
     address: {
         type: String,
-    }
+    },
+    orderId: {
+        type: String
+    },
 }, { timestamps: true })
 
 const Transaction = mongoose.model('Transaction', TransactionSchema)

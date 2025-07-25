@@ -14,7 +14,6 @@ const { sendOTP, verifyOTP, urlSendTestOtp, urlVerifyOtp } = require("../service
 const Subscription = require("../model/Subscription");
 let salt = 10;
 
-
 exports.checkSubscription = async (req, res) => {
     const id = req.payload?._id;
     try {

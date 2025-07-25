@@ -1,6 +1,6 @@
 const express = require('express')
 const { verifyToken } = require('../middleware/authValidation')
-const { getSubscriptions, getActiveSubscriptions, addSubscription, updateSubscription, changeStatus, deleteSbuscription, applySubscription, getUserSubscription, adminChangeUserSubscriptionHistory, userSubscriptionHistory, subscriptionListWithUser } = require('../controller/subscription')
+const { getSubscriptions, getActiveSubscriptions, addSubscription, updateSubscription, changeStatus, deleteSbuscription, applySubscription, getUserSubscription, adminChangeUserSubscriptionHistory, userSubscriptionHistory, subscriptionListWithUser, createOrderSubscription } = require('../controller/subscription')
 const subscribeRouter = express.Router()
 
 subscribeRouter.get('/', getSubscriptions)
@@ -17,6 +17,7 @@ subscribeRouter.put('/changeStatus/:id', verifyToken, changeStatus)
 
 subscribeRouter.delete('/:id', verifyToken, deleteSbuscription)
 
+subscribeRouter.post('/generateOrder/subscription/:id', verifyToken, createOrderSubscription) //here will be subscription id
 subscribeRouter.post('/apply/subscrition/:id', verifyToken, applySubscription) //here will be subscription id
 
 subscribeRouter.get('/subscribed/user', verifyToken, getUserSubscription)

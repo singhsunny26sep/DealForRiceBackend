@@ -1,6 +1,13 @@
 const SubscribeHistory = require("../model/SubscribeHistory");
 const Subscription = require("../model/Subscription");
+const Transaction = require("../model/Transaction");
 const User = require("../model/User");
+const Razorpay = require('razorpay');
+const { verifySignature } = require("../service/razorPay");
+
+const razorPyaSecret = process.env.RAZOR_SECRET_KEY
+const instance = new Razorpay({ key_id: process.env.RAZOR_KEY_ID, key_secret: process.env.RAZOR_SECRET_KEY })
+
 
 exports.getSubscriptions = async (req, res) => {
     const id = req.params?.id
@@ -146,13 +153,110 @@ exports.changeStatus = async (req, res) => {
 
 // ======================================== vendor ===================================
 
-exports.applySubscription = async (req, res) => {
+exports.createOrderSubscription = async (req, res) => {
     const id = req.params?.id; //here will be subscription id
     const userId = req.payload?._id
     // console.log("================================== applySubscription ==================================");
     // console.log("id: ", id);
+    // const amount = req.body?.amount
+    // const type = req.body?.type
 
     try {
+        const checkSubscription = await Subscription.findById(id)
+        if (!checkSubscription) {
+            return res.status(404).json({ success: false, msg: "Subscription not found" });
+        }
+        const checkUser = await User.findById(userId)
+        if (!checkUser) {
+            return res.status(404).json({ success: false, msg: "User not found" });
+        }
+        if (checkUser.isApproved == false) {
+            return res.status(403).json({ success: false, msg: "User is not approved" });
+        }
+        if (checkUser.isSubscribed == true) {
+            return res.status(400).json({ success: false, msg: "Subscription is already taken." });
+        }
+
+        const activeSubscription = await SubscribeHistory.findOne({
+            _id: checkUser?.subscriptionId,
+            // status: 'active',
+            endDate: { $gt: new Date() } // Check if the subscription is still valid
+        });
+        if (activeSubscription) {
+            return res.status(400).json({ success: false, msg: `Subscription is already taken. Please contact to admin.` });
+        }
+
+        let amount = Number(checkSubscription?.amount) * 100
+        const options = {
+            "amount": amount,
+            "currency": "INR",
+            "receipt": "receipt#1",
+            "partial_payment": false,
+            "notes": {
+                "username": checkUser?.name,
+                "email": checkUser?.email,
+                "moibile": checkUser?.mobile
+            }
+        }
+
+
+        instance.orders.create(options, async (err, order) => {
+            // console.log("error: ", err);
+            // console.log("order: ", order);
+            if (err) {
+                return res.status(401).json({ msg: 'Failed to genarate payment order!', success: false })
+            }
+            const result = await Transaction.create({ userId, amount, orderId: order.id, price: (order.amount / 100) })
+            // const result = await Transaction.create({ userId: id, studentId: studentId ? studentId : null, transactionType: "online", transaction_purpose: type, payment: (order.amount / 100), order_id: order.id, roles: role, transaction_id: genTransaction })
+
+            if (result) {
+                return res.status(200).json({ msg: 'Order created successfully.', success: true, result, order })
+            }
+            return res.status(400).json({ msg: 'Failed to initiate payment!', success: false })
+        });
+
+
+        // const subscriptionDate = new Date();
+        // const expirationDate = new Date(subscriptionDate.getTime() + checkSubscription.duration * 24 * 60 * 60 * 1000);
+        /* const subscriptionDate = new Date(); // Current date
+        const expirationDate = new Date(subscriptionDate); // Copy current date
+
+        // Add months based on the subscription duration
+        expirationDate.setMonth(expirationDate.getMonth() + checkSubscription.duration);
+
+        checkUser.isSubscribed = true;
+
+
+        const result = await SubscribeHistory.create({ userId, subscriptionId: id, endDate: expirationDate, duration: checkSubscription.duration, amount: checkSubscription?.amount })
+        checkUser.subscriptionId = result?._id */
+        /* if (result) {
+            await checkUser.save()
+            return res.status(200).json({ success: true, msg: "Subscription applied successfully", result });
+        }
+        return res.status(400).json({ success: false, msg: "Failed to apply subscription" }); */
+
+    } catch (error) {
+        console.error("Error on applySubscription: ", error);
+        return res.status(500).json({ success: false, msg: "Internal Server Error", error: error.message });
+    }
+}
+
+
+exports.applySubscription = async (req, res) => {
+    const id = req.params?.id; //here will be subscription id
+    const userId = req.payload?._id
+    const razorpay_signature = req.body.data.razorpay_signature
+    const razorpay_order_id = req.body.data.razorpay_order_id
+    const razorpay_payment_id = req.body.data.razorpay_payment_id
+    // const transactionId = req.body?.transactionId
+    // console.log("================================== applySubscription ==================================");
+    // console.log("id: ", id);
+
+    try {
+        const isValid = verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, razorPyaSecret);
+        if (!isValid) {
+            return res.status(400).json({ msg: 'Failed to verify payment!', success: false })
+        }
         const checkSubscription = await Subscription.findById(id)
         if (!checkSubscription) {
             return res.status(404).json({ success: false, msg: "Subscription not found" });
@@ -188,6 +292,7 @@ exports.applySubscription = async (req, res) => {
 
 
         const result = await SubscribeHistory.create({ userId, subscriptionId: id, endDate: expirationDate, duration: checkSubscription.duration, amount: checkSubscription?.amount })
+        await Transaction.updateOne({ orderId: razorpay_order_id }, { $set: { status: "success" } })
         checkUser.subscriptionId = result?._id
         if (result) {
             await checkUser.save()
