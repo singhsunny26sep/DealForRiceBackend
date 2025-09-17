@@ -293,8 +293,7 @@ exports.loginUser = async (req, res) => {
 }
 
 exports.loginWithMobile = async (req, res) => {
-    // console.log("req.body: ", req.body);
-
+    // console.log("req.body: ", req.body);   
     const mobile = req.body?.mobile
     const countryShortName = req.body?.countryShortName
     const countryCode = req.body?.countryCode
@@ -326,6 +325,39 @@ exports.loginWithMobile = async (req, res) => {
         return res.status(400).json({ success: false, msg: "Failed to send verification code" })
     } catch (error) {
         console.log("error on loginWithMobile: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+}
+
+const {sendEmailOtp}=require("../service/emailHelper")
+exports.loginOrSignInWithEmail = async (req, res) => {
+const email = req.body?.email
+    const countryShortName = req.body?.countryShortName
+    const countryCode = req.body?.countryCode
+    const updatedData = {
+    code:  Math.floor(100000 + Math.random() * 900000).toString(),
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000), 
+  };
+    try {
+        let isFirst = false
+        let checkUser
+        checkUser = await User.findOne({ email: email})
+        if (!checkUser) {
+            checkUser = new User({ email: email })
+            isFirst = true
+            await checkUser.save()
+        }
+        if (!checkUser.trade) {
+            isFirst = true
+        }
+       checkUser.otp = updatedData
+        checkUser.countryShortName = countryShortName
+        checkUser.countryCode = countryCode
+        await checkUser.save()
+        let result = sendEmailOtp(email,updatedData.code)
+            return res.status(200).json({ success: true, msg: "Verification code sent successfully", result, isFirst })
+    } catch (error) {
+        console.log("error on loginWithEmail: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })
     }
 }
@@ -397,6 +429,36 @@ exports.verifyOTPAPI = async (req, res) => {
             return res.status(200).json({ success: true, msg: 'Verification successful', result: checkUser, data: result, token, isFirst })
         }
         return res.status(400).json({ success: false, msg: 'Verification failed' })
+    } catch (error) {
+        console.log("error on verifyOTP: ", error);
+        return res.status(500).json({ error: error, success: false, msg: error.message })
+    }
+} 
+
+exports.verifyOTPWithEmail= async (req, res) => {
+    console.log(req.body , "data")
+    const otp = req.body.otp
+    const email = req.body?.mobile
+    const fcmToken = req.body?.fcmToken
+    const isFirst = req.body?.isFirst
+    try {
+        const checkUser = await User.findOne({ email: email })
+        console.log("checkUser: ", checkUser);
+        if (!checkUser) {
+            return res.status(404).json({ success: false, msg: 'User not found' })
+        }
+        if (checkUser.isActive == false) {
+            return res.status(401).json({ success: false, msg: 'Account is not active. Please contact with admin.' })
+        }
+        console.log("otp: ", checkUser?.otp , otp);
+        if(checkUser?.otp?.code?.toString() !== otp.toString()){
+             return res.status(400).json({ success: false, msg: 'Invalid OTP' })
+        }else{
+          if(fcmToken)  checkUser.fcmToken = fcmToken
+            await checkUser.save()
+            const token = await generateToken(checkUser)
+            return res.status(200).json({ success: true, msg: 'Verification successful', result: checkUser, data: result, token, isFirst })
+        }
     } catch (error) {
         console.log("error on verifyOTP: ", error);
         return res.status(500).json({ error: error, success: false, msg: error.message })

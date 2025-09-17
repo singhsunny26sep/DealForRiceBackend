@@ -1,26 +1,27 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
+      type: String,
     },
     email: {
-        type: String,
-        // required: true,
-        // unique: true,
-        // match: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/
+      type: String,
+      // required: true,
+      // unique: true,
+      // match: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/
     },
     mobile: {
-        type: String,
-        required: true,
-        // unique: true,
-        // match: /^\+?\d{1,10}$/
+      type: String,
+      //required: true,
+      // unique: true,
+      // match: /^\+?\d{1,10}$/
     },
     password: {
-        type: String,
-        // required: true,
-        minlength: 5,
-        /* validate: {
+      type: String,
+      // required: true,
+      minlength: 5,
+      /* validate: {
             validator: function (value) {
                 return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,}$/.test(value);
             },
@@ -28,57 +29,61 @@ const UserSchema = new mongoose.Schema({
         } */
     },
     trade: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Trade',
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trade",
     },
     role: {
-        type: String,
-        default: 'user',
-        enum: ['user', 'admin', 'manager']
+      type: String,
+      default: "user",
+      enum: ["user", "admin", "manager"],
     },
+    otp: { code: String, expiresAt: Date },
     address: {
-        type: String,
+      type: String,
     },
     city: {
-        type: String,
+      type: String,
     },
     state: {
-        type: String,
+      type: String,
     },
     country: {
-        type: String,
+      type: String,
     },
     shopName: {
-        type: String
+      type: String,
     },
     image: {
-        type: String,
+      type: String,
     },
     isActive: {
-        type: Boolean,
-        default: true
+      type: Boolean,
+      default: true,
     },
     isSubscribed: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     subscriptionId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'SubscribeHistory'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SubscribeHistory",
     },
     fcmToken: {
-        type: String,
+      type: String,
     },
     countryCode: {
-        type: String
+      type: String,
     },
+
     countryShortName: {
-        type: String
+      type: String,
     },
     lastMessage: String,
     lastMessageTime: Date,
-    unreadCount: { type: Number, default: 0 }
-}, { timestamps: true })
-const User = mongoose.model('User', UserSchema);
+    unreadCount: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+const User = mongoose.model("User", UserSchema);
 
 module.exports = User;
