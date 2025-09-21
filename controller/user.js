@@ -28,15 +28,12 @@ exports.checkSubscription = async (req, res) => {
     const user = await User.findById(id)
       .select(" -otp -__v -password")
       .populate("subscription");
-
     let isSubscriptionActive = false;
     const currentDate = new Date();
-
     // Free trial logic
     if (!user.subscriptionId) {
-      const freeTrialEndDate = new Date(user.createdAt);
-      freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 8); // 8-day trial
-
+      let freeTrialEndDate = new Date(user.createdAt);
+      freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7); // 7-day trial
       if (currentDate <= freeTrialEndDate) {
         isSubscriptionActive = true;
       } else {
@@ -45,7 +42,6 @@ exports.checkSubscription = async (req, res) => {
         await user.save();
       }
     }
-
     // If user has a subscription
     if (user.isSubscribed && user.subscriptionId) {
       const checkSubscriptionHistory = await SubscribeHistory.findById(
@@ -56,7 +52,6 @@ exports.checkSubscription = async (req, res) => {
           .status(404)
           .json({ success: false, msg: "Subscription history not found" });
       }
-
       if (
         checkSubscriptionHistory.endDate &&
         checkSubscriptionHistory.endDate > currentDate
@@ -67,12 +62,10 @@ exports.checkSubscription = async (req, res) => {
         user.isSubscribed = false;
         user.subscriptionId = null;
         checkSubscriptionHistory.status = "inactive";
-
         await checkSubscriptionHistory.save();
         await user.save();
       }
     }
-
     res.status(200).json({ success: true, data: user, isSubscriptionActive });
   } catch (error) {
     console.log("error on checkSubscription: ", error);
