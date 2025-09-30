@@ -6,11 +6,18 @@ function startSubscriptionCron() {
   cron.schedule("0 0 * * *", async () => {
     console.log("⏰ Running subscription expiry cron at", new Date());
     try {
-      const result = await SubscribeHistory.updateMany(
-        {
-          endDate: { $lt: new Date() },
-          status: "active",
-        },
+      const expiredNow = await SubscribeHistory.find({
+        endDate: { $lt: new Date() },
+        status: "active",
+      }).select("_id userId");
+      if (expiredNow.length === 0) {
+        console.log("✅ No subscriptions expired this cycle.");
+        return;
+      }
+      const expiredIds = expiredNow.map((s) => s._id);
+      const userIds = expiredNow.map((s) => s.userId);
+      await SubscribeHistory.updateMany(
+        { _id: { $in: expiredIds } },
         {
           $set: {
             status: "inactive",
@@ -18,24 +25,18 @@ function startSubscriptionCron() {
           },
         }
       );
-      console.log(`✅ Subscriptions expired: ${result.modifiedCount}`);
-      const expiredSubs = await SubscribeHistory.find({
-        endDate: { $lt: new Date() },
-        status: "inactive",
-      }).select("userId");
-      if (expiredSubs.length > 0) {
-        const userIds = expiredSubs.map((s) => s.userId);
-        await User.updateMany(
-          { _id: { $in: userIds } },
-          {
-            $set: {
-              isSubscribed: false,
-              subscriptionId: null,
-            },
-          }
-        );
-        console.log(`✅ Users updated: ${userIds.length}`);
-      }
+      await User.updateMany(
+        { _id: { $in: userIds } },
+        {
+          $set: {
+            isSubscribed: false,
+            subscriptionId: null,
+          },
+        }
+      );
+      console.log(
+        `✅ Expired subscriptions: ${expiredIds.length}, Users updated: ${userIds.length}`
+      );
     } catch (err) {
       console.error("❌ Error in subscription expiry cron:", err);
     }
