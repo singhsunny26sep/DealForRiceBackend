@@ -57,7 +57,8 @@ userRouter.get("/profile", verifyToken, userProfile);
 userRouter.get("/getAll", getAllUsers);
 
 userRouter.get("/trade/:id", getAllUserByTrad);
-// userRouter.get('/profile/:id', verifyToken, userProfile)
+
+userRouter.get("/profile/:id", verifyToken, userProfile);
 
 userRouter.put("/imageUpdate", verifyToken, uploadProfileImage); // update all fields for current user
 

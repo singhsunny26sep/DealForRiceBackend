@@ -144,7 +144,11 @@ exports.userProfile = async (req, res) => {
       .populate("trade")
       .populate({
         path: "subscriptionId",
-        populate: { path: "subscriptionId", select: "-isActive -__V" },
+        model: "SubscribeHistory",
+        populate: {
+          path: "subscriptionId",
+          model: "Subscription",
+        },
       });
     if (!user) {
       return res.status(404).json({
