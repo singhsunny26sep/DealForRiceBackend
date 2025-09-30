@@ -1,34 +1,23 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const SubscribeHistorySchema = new mongoose.Schema({
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    },
+const SubscribeHistorySchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     subscriptionId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Subscription'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subscription",
     },
-    startDate: {
-        type: Date,
-        default: Date.now
-    },
-    endDate: {
-        type: Date
-    },
-    duration: {
-        type: Number,
-        // required: true
-    },
-    amount: {
-        type: Number,
-    },
+    startDate: { type: Date, default: Date.now },
+    endDate: { type: Date },
+    duration: { type: Number },
+    amount: { type: Number },
     status: {
-        type: String,
-        enum: ['active', 'inactive'],
-        default: 'inactive'
+      type: String,
+      enum: ["active", "inactive"],
+      default: "inactive",
     },
-}, { timestamps: true })
+  },
+  { timestamps: true, versionKey: false }
+);
 
-const SubscribeHistory = mongoose.model('SubscribeHistory', SubscribeHistorySchema)
-module.exports = SubscribeHistory
+module.exports = mongoose.model("SubscribeHistory", SubscribeHistorySchema);

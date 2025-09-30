@@ -32,20 +32,20 @@ exports.checkSubscription = async (req, res) => {
     const currentDate = new Date();
     // Free trial logic
     if (!user.subscriptionId) {
-      let freeTrialEndDate = new Date(user.createdAt);
-      freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7); // 7-day trial
-      if (currentDate <= freeTrialEndDate) {
-        isSubscriptionActive = true;
-      } else {
-        user.isSubscribed = false;
-        isSubscriptionActive = false;
-        await user.save();
-      }
+      // let freeTrialEndDate = new Date(user.createdAt);
+      // freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7); // 7-day trial
+      // if (currentDate <= freeTrialEndDate) {
+      //   isSubscriptionActive = true;
+      // } else {
+      user.isSubscribed = false;
+      isSubscriptionActive = false;
+      await user.save();
+      // }
     }
     // If user has a subscription
-    if (user.isSubscribed && user.subscriptionId) {
+    if (user?.isSubscribed && user?.subscriptionId) {
       const checkSubscriptionHistory = await SubscribeHistory.findById(
-        user.subscriptionId
+        user?.subscriptionId
       );
       if (!checkSubscriptionHistory) {
         return res
@@ -101,7 +101,6 @@ exports.dashboardDetails = async (req, res) => {
       Transaction.countDocuments({ status: "cancelled" }),
       // Rate.countDocuments()
     ]);
-
     return res.status(200).json({
       msg: "Ok",
       success: true,
@@ -225,15 +224,26 @@ exports.registorUser = async (req, res) => {
   const city = req.body?.city;
   const state = req.body?.state;
   const image = req.files?.image;
-
   try {
-    const checkUser = await User.findOne({ email });
-    if (checkUser) {
-      return res.status(400).json({
-        error: "Email already exists",
-        success: false,
-        msg: "Email already exists",
-      });
+    let user;
+    if (email) {
+      user = await User.findOne({ email });
+      if (user) {
+        return res.status(400).json({
+          error: "Email already exists",
+          success: false,
+          msg: "Email already exists",
+        });
+      }
+    } else if (!user && mobile) {
+      user = await User.findOne({ mobile });
+      if (user) {
+        return res.status(400).json({
+          error: "Mobile number already exists",
+          success: false,
+          msg: "Mobile number already exists",
+        });
+      }
     }
     const hashedPass = await bcrypt.hash(password, parseInt(salt));
     if (!hashedPass) {
@@ -241,39 +251,42 @@ exports.registorUser = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Failed to register!" });
     }
-
-    /*  if (role) {
-             if (role === "admin") {
-                 return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
-             }
-         } */
-
-    const user = new User({ name, email, mobile, password: hashedPass });
-    if (mongoose.Types.ObjectId.isValid(trade)) {
-      user.trade = trade;
-    }
+    user = new User({ name, email, mobile, password: hashedPass });
+    if (mongoose.Types.ObjectId.isValid(trade)) user.trade = trade;
     if (city) user.city = city;
     if (state) user.state = state;
-
     if (image) {
       let imageUrl = await uploadToCloudinary(image.tempFilePath);
       user.image = imageUrl;
     }
-    user.isSubscribed = true;
-    const result = await user.save();
-    if (result) {
-      const token = await generateToken(result);
-      return res.status(200).json({
-        success: true,
-        msg: `User registered successfully`,
-        result,
-        token,
-      });
+    user = await user.save();
+    const freePlan = await Subscription.findOne({
+      name: "Free for all trades",
+    });
+    if (!freePlan) {
+      user.isSubscribed = false;
+      user.subscriptionId = null;
+      user = await user.save();
     }
-    return res.status(400).json({
-      error: "Failed to register user",
-      success: false,
-      msg: "Failed to register user",
+    let freeTrialEndDate = new Date(user.createdAt);
+    freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7);
+    const applyFreeTrial = await SubscribeHistory.create({
+      userId: user?._id,
+      subscriptionId: freePlan?._id,
+      endDate: freeTrialEndDate,
+      duration: freePlan?.duration,
+      amount: freePlan?.amount,
+      status: "active",
+    });
+    user.subscriptionId = applyFreeTrial?._id;
+    user.isSubscribed = true;
+    user = await user.save();
+    const token = await generateToken(user);
+    return res.status(200).json({
+      success: true,
+      msg: `User registered successfully`,
+      result,
+      token,
     });
   } catch (error) {
     console.log("error on registorUser: ", error);
@@ -369,12 +382,10 @@ exports.completeProfile = async (req, res) => {
 
 exports.loginUser = async (req, res) => {
   // console.log("req.body: ", req.body);
-
   const email = req.body?.email;
   const password = req.body?.password;
   const fcmToken = req.body?.fcmToken;
   // console.log("fcmToken: ", req.body?.fcmToken);
-
   try {
     const checkUser = await User.findOne({ email: email });
     if (!checkUser) {
@@ -384,7 +395,6 @@ exports.loginUser = async (req, res) => {
         msg: "Email not register yet please register first with mobile number",
       });
     }
-
     if (checkUser.isActive == false) {
       return res.status(401).json({
         success: false,
@@ -414,31 +424,48 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.loginWithMobile = async (req, res) => {
-  // console.log("req.body: ", req.body);
   const mobile = req.body?.mobile;
   const countryShortName = req.body?.countryShortName;
   const countryCode = req.body?.countryCode;
   try {
     let isFirst = false;
-    let checkUser;
-    checkUser = await User.findOne({ mobile: mobile });
-    // console.log("checkUser: ", checkUser);
-
-    if (!checkUser) {
-      // return res.status(404).json({ success: false, msg: "User not found" })
-      checkUser = new User({ mobile: mobile });
+    let user;
+    user = await User.findOne({ mobile: mobile });
+    if (!user) {
+      const hashedPass = await bcrypt.hash("123456", parseInt(salt));
+      if (!hashedPass) {
+        return res
+          .status(400)
+          .json({ success: false, msg: "Failed to register!" });
+      }
+      user = new User({ mobile: mobile, password: hashedPass });
+      const freePlan = await Subscription.findOne({
+        name: "Free for all trades",
+      });
+      if (!freePlan) {
+        user.isSubscribed = false;
+        user.subscriptionId = null;
+        user = await user.save();
+      }
+      let freeTrialEndDate = new Date();
+      freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7);
+      const applyFreeTrial = await SubscribeHistory.create({
+        userId: user?._id,
+        subscriptionId: freePlan?._id,
+        endDate: freeTrialEndDate,
+        duration: freePlan?.duration,
+        amount: freePlan?.amount,
+        status: "active",
+      });
+      user.subscriptionId = applyFreeTrial?._id;
+      user.isSubscribed = true;
+      user = await user.save();
       isFirst = true;
-      await checkUser.save();
     }
-    if (!checkUser.trade) {
-      isFirst = true;
-    }
-    /* if (checkUser.isActive == false) {
-            return res.status(401).json({ success: false, msg: "Account is not active. Please contact with admin." })
-        } */
-    checkUser.countryShortName = countryShortName;
-    checkUser.countryCode = countryCode;
-    await checkUser.save();
+    if (!user.trade) isFirst = true;
+    user.countryShortName = countryShortName;
+    user.countryCode = countryCode;
+    await user.save();
     let result = await urlSendTestOtp(mobile);
     if (result.Status == "Success") {
       return res.status(200).json({
@@ -470,18 +497,46 @@ exports.loginOrSignInWithEmail = async (req, res) => {
   };
   try {
     let isFirst = false;
-    let checkUser;
-    checkUser = await User.findOne({ email: email });
-    if (!checkUser) {
-      checkUser = new User({ email: email });
+    let user;
+    user = await User.findOne({ email: email });
+    if (!user) {
+      const hashedPass = await bcrypt.hash("123456", parseInt(salt));
+      if (!hashedPass) {
+        return res
+          .status(400)
+          .json({ success: false, msg: "Failed to register!" });
+      }
+      user = new User({ email: email, password: hashedPass });
+      console.log(user, "user", user.createdAt, "datatta");
+      const freePlan = await Subscription.findOne({
+        name: "Free for all trades",
+      });
+      if (!freePlan) {
+        user.isSubscribed = false;
+        user.subscriptionId = null;
+        user = await user.save();
+      }
+      let freeTrialEndDate = new Date();
+      freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7);
+      console.log("freeTrialEndDate: ", freeTrialEndDate, user);
+      const applyFreeTrial = await SubscribeHistory.create({
+        userId: user?._id,
+        subscriptionId: freePlan?._id,
+        endDate: freeTrialEndDate,
+        duration: freePlan?.duration,
+        amount: freePlan?.amount,
+        status: "active",
+      });
+      user.subscriptionId = applyFreeTrial?._id;
+      user.isSubscribed = true;
+      user = await user.save();
       isFirst = true;
-      await checkUser.save();
     }
-    if (!checkUser.trade) isFirst = true;
-    checkUser.otp = updatedData;
-    checkUser.countryShortName = countryShortName;
-    checkUser.countryCode = countryCode;
-    await checkUser.save();
+    if (!user.trade) isFirst = true;
+    user.otp = updatedData;
+    user.countryShortName = countryShortName;
+    user.countryCode = countryCode;
+    await user.save();
     let result = sendEmailOtp(email, updatedData.code);
     return res.status(200).json({
       success: true,

@@ -1,54 +1,80 @@
-const express = require('express');
-const { registrationValidation, loginValidation } = require('../middleware/userValidation');
-const { verifyToken } = require('../middleware/authValidation');
-const {loginOrSignInWithEmail, verifyOTPWithEmail,registorUser, loginUser, userUpdate, userProfile, uploadProfileImage, getAllUserByTrad, getAllUsers, getAllUserForChat, changeStatusUser, singleUser, dashboardDetails, sendTestOtp, verifyOTPTest, loginWithMobile, verifyOTPAPI, resetPassword, mobileLogin, checkSubscription, completeProfile, deleteUser } = require('../controller/user');
+const express = require("express");
+const {
+  registrationValidation,
+  loginValidation,
+} = require("../middleware/userValidation");
+const { verifyToken } = require("../middleware/authValidation");
+const {
+  loginOrSignInWithEmail,
+  verifyOTPWithEmail,
+  registorUser,
+  loginUser,
+  userUpdate,
+  userProfile,
+  uploadProfileImage,
+  getAllUserByTrad,
+  getAllUsers,
+  getAllUserForChat,
+  changeStatusUser,
+  singleUser,
+  dashboardDetails,
+  sendTestOtp,
+  verifyOTPTest,
+  loginWithMobile,
+  verifyOTPAPI,
+  resetPassword,
+  mobileLogin,
+  checkSubscription,
+  completeProfile,
+  deleteUser,
+} = require("../controller/user");
 const userRouter = express.Router();
 
 // userRouter.get('')
 
-userRouter.get('/subscriptionDetails', verifyToken, checkSubscription)
+userRouter.get("/subscriptionDetails", verifyToken, checkSubscription);
 
-userRouter.get('/dashboard', verifyToken, dashboardDetails)
+userRouter.get("/dashboard", verifyToken, dashboardDetails);
 
-userRouter.post('/register', registrationValidation, registorUser)
+userRouter.post("/register", registrationValidation, registorUser);
 
-userRouter.post('/login', loginValidation, loginUser)
+userRouter.post("/login", loginValidation, loginUser);
 
-userRouter.post('/loginWithMobile', loginWithMobile)
+userRouter.post("/loginWithMobile", loginWithMobile);
 
-userRouter.post("/loginOrSignInWithEmail", loginOrSignInWithEmail)
+userRouter.post("/loginOrSignInWithEmail", loginOrSignInWithEmail);
 
-userRouter.post('/mobileLogin', mobileLogin)
+userRouter.post("/mobileLogin", mobileLogin);
 
-userRouter.post('/resetPassword', resetPassword)
+userRouter.post("/resetPassword", resetPassword);
 
-userRouter.post('/verify/otp', verifyOTPAPI)
+userRouter.post("/verify/otp", verifyOTPAPI);
 
-userRouter.post("/verifyOTPWithEmail", verifyOTPWithEmail)
+userRouter.post("/verifyOTPWithEmail", verifyOTPWithEmail);
 
-userRouter.get('/profile', verifyToken, userProfile)
+userRouter.get("/profile", verifyToken, userProfile);
 
-userRouter.get('/getAll', getAllUsers)
+userRouter.get("/getAll", getAllUsers);
 
-userRouter.get('/trade/:id', getAllUserByTrad)
+userRouter.get("/trade/:id", getAllUserByTrad);
 // userRouter.get('/profile/:id', verifyToken, userProfile)
 
-userRouter.put('/imageUpdate', verifyToken, uploadProfileImage) // update all fields for current user
+userRouter.put("/imageUpdate", verifyToken, uploadProfileImage); // update all fields for current user
 
 // userRouter.put('/profile/:id', verifyToken, userUpdate)
-userRouter.put('/profile', verifyToken, userUpdate)
+userRouter.put("/profile", verifyToken, userUpdate);
 
-userRouter.put('/completeProfile/:id', verifyToken, completeProfile)
+userRouter.put("/completeProfile/:id", verifyToken, completeProfile);
 
-userRouter.get('/chat/users', verifyToken, getAllUserForChat)
+userRouter.get("/chat/users", verifyToken, getAllUserForChat);
 
-userRouter.put('/approve/user/:id', verifyToken, changeStatusUser)
+userRouter.put("/approve/user/:id", verifyToken, changeStatusUser);
 
-userRouter.get('/userProfile/:id', verifyToken, singleUser)
+userRouter.get("/userProfile/:id", verifyToken, singleUser);
 
-userRouter.post('/testOTPSend', sendTestOtp)
+userRouter.post("/testOTPSend", sendTestOtp);
 
-userRouter.delete('/delete/:id', verifyToken, deleteUser)
+userRouter.delete("/delete/:id", verifyToken, deleteUser);
 // userRouter.post('/testOTPVerify', verifyOTPTest)
 
-module.exports = userRouter
+module.exports = userRouter;
