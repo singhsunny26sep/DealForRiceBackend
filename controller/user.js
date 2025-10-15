@@ -227,6 +227,7 @@ exports.registorUser = async (req, res) => {
   const trade = req.body?.trade;
   const city = req.body?.city;
   const state = req.body?.state;
+  const role = req.body?.role || "user";
   const image = req.files?.image;
   try {
     let user;
@@ -255,7 +256,7 @@ exports.registorUser = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Failed to register!" });
     }
-    user = new User({ name, email, mobile, password: hashedPass });
+    user = new User({ name, email, mobile, role, password: hashedPass });
     if (mongoose.Types.ObjectId.isValid(trade)) user.trade = trade;
     if (city) user.city = city;
     if (state) user.state = state;
@@ -289,7 +290,7 @@ exports.registorUser = async (req, res) => {
     return res.status(200).json({
       success: true,
       msg: `User registered successfully`,
-      result,
+      result: user,
       token,
     });
   } catch (error) {

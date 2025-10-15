@@ -2,82 +2,33 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-    },
-    email: {
-      type: String,
-      // required: true,
-      // unique: true,
-      // match: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/
-    },
-    mobile: {
-      type: String,
-      //required: true,
-      // unique: true,
-      // match: /^\+?\d{1,10}$/
-    },
-    password: {
-      type: String,
-      // required: true,
-      minlength: 5,
-      /* validate: {
-            validator: function (value) {
-                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,}$/.test(value);
-            },
-            message: 'Password should contain at least 5 characters, including uppercase and lowercase letters, numbers, and special characters'
-        } */
-    },
-    trade: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Trade",
-    },
+    name: { type: String },
+    email: { type: String },
+    mobile: { type: String },
+    password: { type: String },
+    trade: { type: mongoose.Schema.Types.ObjectId, ref: "Trade" },
     role: {
       type: String,
       default: "user",
       enum: ["user", "admin", "manager"],
     },
     otp: { code: String, expiresAt: Date },
-    address: {
-      type: String,
-    },
-    city: {
-      type: String,
-    },
-    state: {
-      type: String,
-    },
-    country: {
-      type: String,
-    },
-    shopName: {
-      type: String,
-    },
-    image: {
-      type: String,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    isSubscribed: {
-      type: Boolean,
-      default: false,
-    },
+    address: { type: String },
+    city: { type: String },
+    state: { type: String },
+    country: { type: String },
+    shopName: { type: String },
+    image: { type: String },
+    isActive: { type: Boolean, default: true },
+    isSubscribed: { type: Boolean, default: false },
     subscriptionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubscribeHistory",
     },
-    fcmToken: {
-      type: String,
-    },
-    countryCode: {
-      type: String,
-    },
-
-    countryShortName: {
-      type: String,
-    },
+    fcmToken: { type: String },
+    countryCode: { type: String },
+    isOnline: { type: Boolean, default: false },
+    countryShortName: { type: String },
     lastMessage: String,
     lastMessageTime: Date,
     unreadCount: { type: Number, default: 0 },
