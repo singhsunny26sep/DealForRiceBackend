@@ -1,4 +1,6 @@
 const express = require("express");
+const userRouter = express.Router();
+
 const {
   registrationValidation,
   loginValidation,
@@ -18,8 +20,6 @@ const {
   changeStatusUser,
   singleUser,
   dashboardDetails,
-  sendTestOtp,
-  verifyOTPTest,
   loginWithMobile,
   verifyOTPAPI,
   resetPassword,
@@ -27,10 +27,9 @@ const {
   checkSubscription,
   completeProfile,
   deleteUser,
+  forgotPassword,
+  updatePassword,
 } = require("../controller/user");
-const userRouter = express.Router();
-
-// userRouter.get('')
 
 userRouter.get("/subscriptionDetails", verifyToken, checkSubscription);
 
@@ -60,7 +59,7 @@ userRouter.get("/trade/:id", getAllUserByTrad);
 
 userRouter.get("/profile/:id", verifyToken, userProfile);
 
-userRouter.put("/imageUpdate", verifyToken, uploadProfileImage); // update all fields for current user
+userRouter.put("/imageUpdate", verifyToken, uploadProfileImage);
 
 // userRouter.put('/profile/:id', verifyToken, userUpdate)
 userRouter.put("/profile", verifyToken, userUpdate);
@@ -73,9 +72,10 @@ userRouter.put("/approve/user/:id", verifyToken, changeStatusUser);
 
 userRouter.get("/userProfile/:id", verifyToken, singleUser);
 
-userRouter.post("/testOTPSend", sendTestOtp);
-
 userRouter.delete("/delete/:id", verifyToken, deleteUser);
-// userRouter.post('/testOTPVerify', verifyOTPTest)
+
+userRouter.post("/forgot-password", forgotPassword);
+
+userRouter.put("/update-password", verifyToken, updatePassword);
 
 module.exports = userRouter;

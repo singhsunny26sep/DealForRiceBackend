@@ -1,25 +1,18 @@
-const { generateToken } = require("../middleware/authValidation");
+const bcrypt = require("bcryptjs");
 const User = require("../model/User");
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+const Product = require("../model/Product");
+const Trade = require("../model/Trade");
+const SubscribeHistory = require("../model/SubscribeHistory");
+const Subscription = require("../model/Subscription");
+const Transaction = require("../model/Transaction");
 const {
   deleteFromCloudinary,
   uploadToCloudinary,
 } = require("../service/uploadImage");
-const Conversation = require("../model/Conversation");
-const Chat = require("../model/Chat");
-const Message = require("../model/Message");
-const Product = require("../model/Product");
-const Trade = require("../model/Trade");
-const SubscribeHistory = require("../model/SubscribeHistory");
-const Transaction = require("../model/Transaction");
-const {
-  sendOTP,
-  verifyOTP,
-  urlSendTestOtp,
-  urlVerifyOtp,
-} = require("../service/sendOTP");
-const Subscription = require("../model/Subscription");
+const { generateToken } = require("../middleware/authValidation");
+const { urlSendTestOtp, urlVerifyOtp } = require("../service/sendOTP");
+const { sendEmailOtp } = require("../service/emailHelper");
 let salt = 10;
 
 exports.checkSubscription = async (req, res) => {
@@ -305,7 +298,6 @@ exports.completeProfile = async (req, res) => {
   console.log(
     " ============================== complete profile =================================="
   );
-
   const id = req.params?.id;
   const name = req.body?.name;
   const email = req.body?.email;
@@ -317,11 +309,8 @@ exports.completeProfile = async (req, res) => {
   const country = req.body?.country;
   const shopName = req.body?.shopName;
   const image = req.files?.image;
-
   console.log(" id: ", id);
-
   console.log("req.body: ", req.body);
-
   try {
     const checkUser = await User.findById(id);
     if (!checkUser) {
@@ -337,13 +326,11 @@ exports.completeProfile = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Failed to register!" });
     }
-
     /* if (role) {
             if (role === "admin") {
                 return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
             }
         } */
-
     // const user = new User({ name, email, password: hashedPass })
     if (name) checkUser.name = name;
     if (email) checkUser.email = email;
@@ -356,7 +343,6 @@ exports.completeProfile = async (req, res) => {
     if (state) checkUser.state = state;
     if (country) checkUser.country = country;
     if (shopName) checkUser.shopName = shopName;
-
     if (image) {
       let imageUrl = await uploadToCloudinary(image.tempFilePath);
       checkUser.image = imageUrl;
@@ -388,11 +374,12 @@ exports.completeProfile = async (req, res) => {
 exports.loginUser = async (req, res) => {
   // console.log("req.body: ", req.body);
   const email = req.body?.email;
+  const role = req.body?.role?.toLowerCase() || "user";
   const password = req.body?.password;
   const fcmToken = req.body?.fcmToken;
   // console.log("fcmToken: ", req.body?.fcmToken);
   try {
-    const checkUser = await User.findOne({ email: email });
+    const checkUser = await User.findOne({ email, role });
     if (!checkUser) {
       return res.status(401).json({
         error: "Invalid credentials",
@@ -430,12 +417,13 @@ exports.loginUser = async (req, res) => {
 
 exports.loginWithMobile = async (req, res) => {
   const mobile = req.body?.mobile;
+  const role = req.body?.role?.toLowerCase() || "user";
   const countryShortName = req.body?.countryShortName;
   const countryCode = req.body?.countryCode;
   try {
     let isFirst = false;
     let user;
-    user = await User.findOne({ mobile: mobile });
+    user = await User.findOne({ mobile, role });
     if (!user) {
       const hashedPass = await bcrypt.hash("123456", parseInt(salt));
       if (!hashedPass) {
@@ -443,7 +431,7 @@ exports.loginWithMobile = async (req, res) => {
           .status(400)
           .json({ success: false, msg: "Failed to register!" });
       }
-      user = new User({ mobile: mobile, password: hashedPass });
+      user = new User({ mobile, role, password: hashedPass });
       const freePlan = await Subscription.findOne({
         name: "Free for all trades",
       });
@@ -491,9 +479,9 @@ exports.loginWithMobile = async (req, res) => {
   }
 };
 
-const { sendEmailOtp } = require("../service/emailHelper");
 exports.loginOrSignInWithEmail = async (req, res) => {
   const email = req.body?.email;
+  const role = req.body?.role?.toLowerCase() || "user";
   const countryShortName = req.body?.countryShortName;
   const countryCode = req.body?.countryCode;
   const updatedData = {
@@ -503,7 +491,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
   try {
     let isFirst = false;
     let user;
-    user = await User.findOne({ email: email });
+    user = await User.findOne({ email, role });
     if (!user) {
       const hashedPass = await bcrypt.hash("123456", parseInt(salt));
       if (!hashedPass) {
@@ -511,7 +499,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
           .status(400)
           .json({ success: false, msg: "Failed to register!" });
       }
-      user = new User({ email: email, password: hashedPass });
+      user = new User({ email, role, password: hashedPass });
       console.log(user, "user", user.createdAt, "datatta");
       const freePlan = await Subscription.findOne({
         name: "Free for all trades",
@@ -559,14 +547,15 @@ exports.loginOrSignInWithEmail = async (req, res) => {
 
 exports.mobileLogin = async (req, res) => {
   const mobile = req.body?.mobile;
+  const role = req.body?.role?.toLowerCase() || "user";
   const password = req.body?.password;
   const fcmToken = req.body?.fcmToken;
   try {
-    const checkUser = await User.findOne({ mobile });
+    const checkUser = await User.findOne({ mobile, role });
     if (!checkUser) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
-    if (checkUser.isActive == false) {
+    if (checkUser.role !== "admin" && checkUser.isActive == false) {
       return res.status(401).json({
         success: false,
         msg: "Account is not active. Please contact with admin.",
@@ -596,32 +585,28 @@ exports.mobileLogin = async (req, res) => {
 
 exports.verifyOTPAPI = async (req, res) => {
   // console.log("req.body: ", req.body);
-
   const sessionId = req.body.sessionId;
   const otp = req.body.otp;
   const mobile = req.body?.mobile;
+  const role = req.body?.role?.toLowerCase() || "user";
   const fcmToken = req.body?.fcmToken;
   const isFirst = req.body?.isFirst;
-
   console.log("mobile: ", mobile);
   console.log("sessionId: ", sessionId);
   console.log("otp: ", otp);
-
   try {
-    const checkUser = await User.findOne({ mobile: mobile });
+    const checkUser = await User.findOne({ mobile, role });
     console.log("checkUser: ", checkUser);
-
     if (!checkUser) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
-    if (checkUser.isActive == false) {
+    if (checkUser.role !== "admin" && checkUser.isActive == false) {
       return res.status(401).json({
         success: false,
         msg: "Account is not active. Please contact with admin.",
       });
     }
     console.log("otp: ", otp);
-
     let result = await urlVerifyOtp(sessionId, otp);
     console.log("result: ", result);
     if (fcmToken && result?.Status == "Success") {
@@ -649,12 +634,11 @@ exports.verifyOTPAPI = async (req, res) => {
 };
 
 exports.verifyOTPWithEmail = async (req, res) => {
-  const otp = req.body.otp;
-  const email = req.body?.email;
-  const fcmToken = req.body?.fcmToken;
-  const isFirst = req.body?.isFirst;
   try {
-    const checkUser = await User.findOne({ email: email });
+    let { otp, email, fcmToken, isFirst, role } = req.body;
+    email = email?.toLowerCase();
+    role = role?.toLowerCase() || "user";
+    const checkUser = await User.findOne({ email, role });
     if (!checkUser || !checkUser.otp || !checkUser.otp.code) {
       return res
         .status(404)
@@ -664,7 +648,7 @@ exports.verifyOTPWithEmail = async (req, res) => {
     if (isExpired) {
       return res.status(410).json({ success: false, msg: "OTP expired" });
     }
-    if (checkUser.isActive == false) {
+    if (checkUser.role !== "admin" && checkUser.isActive == false) {
       return res.status(401).json({
         success: false,
         msg: "Account is not active. Please contact with admin.",
@@ -697,7 +681,6 @@ exports.verifyOTPWithEmail = async (req, res) => {
 exports.uploadProfileImage = async (req, res) => {
   const id = req.payload._id;
   const image = req.files?.image;
-
   try {
     const checkUser = await User.findById(id);
     if (!checkUser) {
@@ -707,7 +690,6 @@ exports.uploadProfileImage = async (req, res) => {
       await deleteFromCloudinary(checkUser?.image);
     }
     let imageUrl = await uploadToCloudinary(image.tempFilePath);
-
     checkUser.image = imageUrl;
     const result = await checkUser.save();
     if (result) {
@@ -749,7 +731,6 @@ exports.userUpdate = async (req, res) => {
     if (trade) checkUser.trade = trade;
     if (city) checkUser.city = city;
     if (state) checkUser.state = state;
-
     const result = await checkUser.save();
     if (result) {
       return res.status(200).json({
@@ -798,7 +779,6 @@ exports.getAllUserForChat = async (req, res) => {
   const address = req.query?.address;
   try {
     const matchQuery = { role: "user", _id: { $ne: userId } };
-
     if (tradeId) {
       matchQuery.trade = new mongoose.Types.ObjectId(tradeId);
     }
@@ -823,7 +803,6 @@ exports.getAllUserForChat = async (req, res) => {
     if (shopName) {
       matchQuery.shopName = { $regex: shopName, $options: "i" };
     }
-
     const usersWithLastMessage = await User.aggregate([
       { $match: matchQuery }, // Match users based on role and tradeId conditionally
       {
@@ -919,7 +898,6 @@ exports.getAllUserForChat = async (req, res) => {
 exports.changeStatusUser = async (req, res) => {
   const id = req.params?.id; //user id
   const status = req.body?.status; //status (online, offline, busy)
-
   try {
     const checkUser = await User.findById(id);
     if (!checkUser) {
@@ -945,30 +923,14 @@ exports.changeStatusUser = async (req, res) => {
   }
 };
 
-exports.sendTestOtp = async (req, res) => {
-  const mobile = req.body?.mobile;
-  try {
-    let result = await urlSendTestOtp(mobile);
-    console.log("result: ", result);
-
-    return res
-      .status(200)
-      .json({ success: false, msg: "Failed to update user status!", result });
-  } catch (error) {
-    console.log("error on sendTestOtp: ", error);
-    return res
-      .status(500)
-      .json({ error: error, success: false, msg: error.message });
-  }
-};
-
 exports.resetPassword = async (req, res) => {
   const mobile = req.body?.mobile;
+  const role = req.body?.role?.toLowerCase() || "user";
   const otp = req.body?.otp;
   const sessionId = req.body?.sessionId;
   const password = req.body?.password;
   try {
-    const checkUser = await User.findOne({ mobile });
+    const checkUser = await User.findOne({ mobile, role });
     if (!checkUser) {
       return res.status(400).json({ success: false, msg: "User not found!" });
     }
@@ -977,7 +939,6 @@ exports.resetPassword = async (req, res) => {
     if (result.Status == "Success") {
       const hashedPass = await bcrypt.hash(password, parseInt(salt));
       checkUser.password = hashedPass;
-
       await checkUser.save();
       return res
         .status(200)
@@ -1012,6 +973,58 @@ exports.deleteUser = async (req, res) => {
       .json({ success: false, msg: "Failed to delete user!" });
   } catch (error) {
     console.log("error on deleteUser: ", error);
+    return res
+      .status(500)
+      .json({ error: error, success: false, msg: error.message });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  let { role, email } = req.body;
+  email = email?.toLowerCase();
+  role = req.body?.role?.toLowerCase() || "user";
+  const updatedData = {
+    code: Math.floor(100000 + Math.random() * 900000).toString(),
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+  };
+  try {
+    const user = await User.findOne({ email, role });
+    if (!user) {
+      return res.status(400).json({ success: false, msg: "User not found!" });
+    }
+    user.otp = updatedData;
+    await user.save();
+    let result = sendEmailOtp(email, updatedData.code);
+    return res.status(200).json({
+      success: true,
+      msg: "Verification code sent to your email successfully",
+      result,
+    });
+  } catch (error) {
+    console.log("error on forgot password: ", error);
+    return res
+      .status(500)
+      .json({ error: error, success: false, msg: error.message });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  let { email, password, role } = req.body;
+  email = email?.toLowerCase();
+  role = role?.toLowerCase() || "user";
+  try {
+    const checkUser = await User.findOne({ email, role });
+    if (!checkUser) {
+      return res.status(400).json({ success: false, msg: "User not found!" });
+    }
+    const hashedPass = await bcrypt.hash(password, parseInt(salt));
+    checkUser.password = hashedPass;
+    await checkUser.save();
+    return res
+      .status(200)
+      .json({ success: true, msg: "Password updated successfully!", result });
+  } catch (error) {
+    console.log("error on verifyOTP: ", error);
     return res
       .status(500)
       .json({ error: error, success: false, msg: error.message });
