@@ -2,6 +2,8 @@ const express = require("express");
 require("dotenv").config();
 const fs = require("fs");
 const mongoose = require("mongoose");
+const ngrok = require("ngrok");
+const morgan = require("morgan");
 const port = process.env.PORT || 4000;
 const fileUpload = require("express-fileupload");
 const { db } = require("./db/db");
@@ -22,8 +24,8 @@ db();
 app.use(cors({ origin: "*" })); // Allow all origins (you can restrict to specific origins)
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
 app.use(express.json());
-// app.use(cors());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan("dev"));
 
 app.get("/", (req, res) => res.send("Hello World!"));
 
@@ -84,6 +86,19 @@ app.get("/upload-user", async (req, res) => {
   return res.status(200).json({ success: true, result: uniqueUsers });
 });
 startSubscriptionCron();
-server.listen(port, () => {
-  console.log(`Example app listening on port ${port}!`);
+// server.listen(port, () => {
+//   console.log(`Example app listening on port ${port}!`);
+// });
+
+server.listen(port, async () => {
+  console.log(`Server running on http://localhost:${port}`);
+
+  if (process.env.ENABLE_NGROK === "true") {
+    const url = await ngrok.connect({
+      addr: port,
+      authtoken: process.env.NGROK_AUTH_TOKEN,
+      // subdomain: process.env.NGROK_SUBDOMAIN // must be set for custom subdomain
+    });
+    console.log(`Public URL: ${url}`);
+  }
 });

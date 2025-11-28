@@ -34,7 +34,7 @@ subscribeRouter.post(
   verifyToken,
   createOrderSubscription
 );
-subscribeRouter.post("/apply/subscrition/:id", verifyToken, applySubscription);
+subscribeRouter.post("/apply/subscription/:id", verifyToken, applySubscription);
 subscribeRouter.put(
   "/change/user/subscription/:id",
   verifyToken,

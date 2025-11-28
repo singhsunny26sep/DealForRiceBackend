@@ -1,42 +1,48 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const TransactionSchema = new mongoose.Schema({
+const TransactionSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    subscriptionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subscription",
+    },
     buyerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        // required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     sellerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        // required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     productId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        // required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
     },
     quantity: {
-        type: Number,
-        // required: true,
-        default: 1
+      type: Number,
+      default: 1,
     },
     price: {
-        type: Number,
-        // required: true,
+      type: Number,
     },
     status: {
-        type: String,
-        enum: ['pending', 'completed', 'cancelled'],
-        default: 'pending'
+      type: String,
+      enum: ["pending", "completed", "cancelled", "failed"],
+      default: "pending",
     },
     address: {
-        type: String,
+      type: String,
     },
     orderId: {
-        type: String
+      type: String,
     },
-}, { timestamps: true })
+  },
+  { timestamps: true }
+);
 
-const Transaction = mongoose.model('Transaction', TransactionSchema)
+const Transaction = mongoose.model("Transaction", TransactionSchema);
 module.exports = Transaction;

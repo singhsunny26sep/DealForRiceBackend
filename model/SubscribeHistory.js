@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const SubscribeHistorySchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    transactionId: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
     subscriptionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subscription",
