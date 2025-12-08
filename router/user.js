@@ -32,50 +32,28 @@ const {
 } = require("../controller/user");
 
 userRouter.get("/subscriptionDetails", verifyToken, checkSubscription);
-
 userRouter.get("/dashboard", verifyToken, dashboardDetails);
-
-userRouter.post("/register", registrationValidation, registorUser);
-
-userRouter.post("/login", loginValidation, loginUser);
-
-userRouter.post("/loginWithMobile", loginWithMobile);
-
-userRouter.post("/loginOrSignInWithEmail", loginOrSignInWithEmail);
-
-userRouter.post("/mobileLogin", mobileLogin);
-
-userRouter.post("/resetPassword", resetPassword);
-
-userRouter.post("/verify/otp", verifyOTPAPI);
-
-userRouter.post("/verifyOTPWithEmail", verifyOTPWithEmail);
-
+userRouter.post("/register", registrationValidation, registorUser); // register user any role
+userRouter.post("/login", loginValidation, loginUser); // login with email and password
+userRouter.post("/loginWithMobile", loginWithMobile); // login/signup with mobile and send otp
+userRouter.post("/loginOrSignInWithEmail", loginOrSignInWithEmail); // login/signup with email and send otp
+userRouter.post("/mobileLogin", mobileLogin); // login with mobile and password
+userRouter.post("/resetPassword", resetPassword); // reset password with mobile and sent otp
+userRouter.post("/verify/otp", verifyOTPAPI); // verify otp with mobile
+userRouter.post("/verifyOTPWithEmail", verifyOTPWithEmail); // verify otp with email
 userRouter.get("/profile", verifyToken, userProfile);
-
 userRouter.get("/getAll", getAllUsers);
-
 userRouter.get("/trade/:id", getAllUserByTrad);
-
 userRouter.get("/profile/:id", verifyToken, userProfile);
-
 userRouter.put("/imageUpdate", verifyToken, uploadProfileImage);
-
 // userRouter.put('/profile/:id', verifyToken, userUpdate)
 userRouter.put("/profile", verifyToken, userUpdate);
-
 userRouter.put("/completeProfile/:id", verifyToken, completeProfile);
-
 userRouter.get("/chat/users", verifyToken, getAllUserForChat);
-
 userRouter.put("/approve/user/:id", verifyToken, changeStatusUser);
-
 userRouter.get("/userProfile/:id", verifyToken, singleUser);
-
 userRouter.delete("/delete/:id", verifyToken, deleteUser);
-
-userRouter.post("/forgot-password", forgotPassword);
-
-userRouter.put("/update-password", verifyToken, updatePassword);
+userRouter.post("/forgot-password", forgotPassword); // forgot password and send otp in email
+userRouter.put("/update-password", verifyToken, updatePassword); // update password after login
 
 module.exports = userRouter;

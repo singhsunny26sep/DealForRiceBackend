@@ -221,6 +221,7 @@ exports.registorUser = async (req, res) => {
   const city = req.body?.city;
   const state = req.body?.state;
   const role = req.body?.role || "user";
+  const fcmToken = req.body?.fcmToken;
   const image = req.files?.image;
   try {
     let user;
@@ -253,6 +254,7 @@ exports.registorUser = async (req, res) => {
     if (mongoose.Types.ObjectId.isValid(trade)) user.trade = trade;
     if (city) user.city = city;
     if (state) user.state = state;
+    if (fcmToken) user.fcmToken = fcmToken;
     if (image) {
       let imageUrl = await uploadToCloudinary(image.tempFilePath);
       user.image = imageUrl;
@@ -295,9 +297,6 @@ exports.registorUser = async (req, res) => {
 };
 
 exports.completeProfile = async (req, res) => {
-  console.log(
-    " ============================== complete profile =================================="
-  );
   const id = req.params?.id;
   const name = req.body?.name;
   const email = req.body?.email;
@@ -309,8 +308,6 @@ exports.completeProfile = async (req, res) => {
   const country = req.body?.country;
   const shopName = req.body?.shopName;
   const image = req.files?.image;
-  console.log(" id: ", id);
-  console.log("req.body: ", req.body);
   try {
     const checkUser = await User.findById(id);
     if (!checkUser) {
@@ -372,12 +369,10 @@ exports.completeProfile = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-  // console.log("req.body: ", req.body);
   const email = req.body?.email;
   const role = req.body?.role?.toLowerCase() || "user";
   const password = req.body?.password;
   const fcmToken = req.body?.fcmToken;
-  // console.log("fcmToken: ", req.body?.fcmToken);
   try {
     const checkUser = await User.findOne({ email, role });
     if (!checkUser) {
@@ -500,7 +495,6 @@ exports.loginOrSignInWithEmail = async (req, res) => {
           .json({ success: false, msg: "Failed to register!" });
       }
       user = new User({ email, role, password: hashedPass });
-      console.log(user, "user", user.createdAt, "datatta");
       const freePlan = await Subscription.findOne({
         name: "Free for all trades",
       });
@@ -511,7 +505,6 @@ exports.loginOrSignInWithEmail = async (req, res) => {
       }
       let freeTrialEndDate = new Date();
       freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7);
-      console.log("freeTrialEndDate: ", freeTrialEndDate, user);
       const applyFreeTrial = await SubscribeHistory.create({
         userId: user?._id,
         subscriptionId: freePlan?._id,
@@ -584,19 +577,14 @@ exports.mobileLogin = async (req, res) => {
 };
 
 exports.verifyOTPAPI = async (req, res) => {
-  // console.log("req.body: ", req.body);
   const sessionId = req.body.sessionId;
   const otp = req.body.otp;
   const mobile = req.body?.mobile;
   const role = req.body?.role?.toLowerCase() || "user";
   const fcmToken = req.body?.fcmToken;
   const isFirst = req.body?.isFirst;
-  console.log("mobile: ", mobile);
-  console.log("sessionId: ", sessionId);
-  console.log("otp: ", otp);
   try {
     const checkUser = await User.findOne({ mobile, role });
-    console.log("checkUser: ", checkUser);
     if (!checkUser) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
@@ -606,9 +594,7 @@ exports.verifyOTPAPI = async (req, res) => {
         msg: "Account is not active. Please contact with admin.",
       });
     }
-    console.log("otp: ", otp);
     let result = await urlVerifyOtp(sessionId, otp);
-    console.log("result: ", result);
     if (fcmToken && result?.Status == "Success") {
       checkUser.fcmToken = fcmToken;
       await checkUser.save();
@@ -882,10 +868,9 @@ exports.getAllUserForChat = async (req, res) => {
         },
       },
       {
-        $sort: { lastMessageTime: -1 }, // Sort by latest message time
+        $sort: { lastMessageTime: -1 },
       },
     ]);
-    // console.log("usersWithLastMessage: ", usersWithLastMessage);
     return res
       .status(200)
       .json({ success: true, result: usersWithLastMessage });
@@ -1022,7 +1007,7 @@ exports.updatePassword = async (req, res) => {
     await checkUser.save();
     return res
       .status(200)
-      .json({ success: true, msg: "Password updated successfully!", result });
+      .json({ success: true, msg: "Password updated successfully!" });
   } catch (error) {
     console.log("error on verifyOTP: ", error);
     return res
