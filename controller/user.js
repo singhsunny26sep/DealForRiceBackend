@@ -940,30 +940,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-exports.deleteUser = async (req, res) => {
-  const id = req.params?.id;
-  try {
-    const checkUser = await User.findById(id);
-    if (!checkUser) {
-      return res.status(400).json({ success: false, msg: "User not found!" });
-    }
-    const result = await User.findByIdAndDelete(id);
-    if (result) {
-      return res
-        .status(200)
-        .json({ success: true, msg: "User deleted successfully!", result });
-    }
-    return res
-      .status(400)
-      .json({ success: false, msg: "Failed to delete user!" });
-  } catch (error) {
-    console.log("error on deleteUser: ", error);
-    return res
-      .status(500)
-      .json({ error: error, success: false, msg: error.message });
-  }
-};
-
 exports.forgotPassword = async (req, res) => {
   let { role, email } = req.body;
   email = email?.toLowerCase();
@@ -1010,6 +986,35 @@ exports.updatePassword = async (req, res) => {
       .json({ success: true, msg: "Password updated successfully!" });
   } catch (error) {
     console.log("error on verifyOTP: ", error);
+    return res
+      .status(500)
+      .json({ error: error, success: false, msg: error.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const userId = req.params?.id;
+    const user = await User.findById(userId);
+    if (!user || user.isDeleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+    user.subscriptionId = null;
+    user.fcmToken = null;
+    user.isSubscribed = false;
+    user.isOnline = false;
+    user.image = null;
+    user.lastSeen = new Date();
+    user.isDeleted = true;
+    user.isActive = false;
+    await user.save();
+    return res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    console.log("error on delete user: ", error);
     return res
       .status(500)
       .json({ error: error, success: false, msg: error.message });

@@ -19,22 +19,23 @@ const UserSchema = new mongoose.Schema(
     country: { type: String },
     shopName: { type: String },
     image: { type: String },
-    isActive: { type: Boolean, default: true },
-    isSubscribed: { type: Boolean, default: false },
     subscriptionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SubscribeHistory",
     },
     fcmToken: { type: String },
     countryCode: { type: String },
-    isOnline: { type: Boolean, default: false },
+    lastSeen: { type: Date },
     countryShortName: { type: String },
     lastMessage: String,
     lastMessageTime: Date,
     unreadCount: { type: Number, default: 0 },
+    isOnline: { type: Boolean, default: false },
+    isSubscribed: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
+    isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 );
-const User = mongoose.model("User", UserSchema);
 
-module.exports = User;
+module.exports = mongoose.model("User", UserSchema);
