@@ -351,7 +351,7 @@ exports.applySubscription = async (req, res) => {
     if (!checkSubscription) {
       await Transaction.updateOne(
         { orderId: razorpay_order_id },
-        { $set: { status: "completed" } }
+        { $set: { status: "failed" } }
       );
       return res
         .status(404)
@@ -399,7 +399,9 @@ exports.applySubscription = async (req, res) => {
       userId,
       transactionId: checkTxn?._id,
       subscriptionId: checkTxn?.subscriptionId,
+      startDate: subscriptionDate,
       endDate: expirationDate,
+      status: "active",
       duration: checkSubscription.duration,
       amount: checkSubscription?.amount,
     });
