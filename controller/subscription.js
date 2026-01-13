@@ -576,15 +576,25 @@ exports.adminChangeUserSubscriptionHistory = async (req, res) => {
 };
 
 exports.userSubscriptionHistory = async (req, res) => {
-  const id = req.params?.id || req.payload?._id;
+  const id = req.params?.id;
   try {
-    const checkUser = await User.findById(id)
-      .select("-password -couponId -role")
-      .populate("trade");
-    if (!checkUser) {
-      return res.status(404).json({ success: false, msg: "User not found" });
+    let checkUser = null;
+    if (id) {
+      checkUser = await User.findById(id)
+        .select("-password -couponId -role")
+        .populate("trade");
+      if (!checkUser) {
+        return res.status(404).json({ success: false, msg: "User not found" });
+      }
     }
-    const result = await SubscribeHistory.find({ userId: id })
+    const filter = {};
+    if (req.payload?.role === "admin") {
+      if (id) filter.userId = id;
+    } else {
+      filter.userId = req.payload?._id;
+    }
+    console.log(req.payload.role, filter, "filllllllllllllll");
+    const result = await SubscribeHistory.find(filter)
       .sort({ createdAt: -1 })
       .populate("subscriptionId");
     if (result) {
@@ -592,7 +602,7 @@ exports.userSubscriptionHistory = async (req, res) => {
         success: true,
         msg: "User subscription history fetched successfully",
         result,
-        user: checkUser,
+        user: checkUser ? checkUser : null,
       });
     }
     return res
