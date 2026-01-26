@@ -334,24 +334,24 @@ exports.applySubscription = async (req, res) => {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      razorPyaSecret
+      razorPyaSecret,
     );
     if (!isValid) {
       await Transaction.updateOne(
         { orderId: razorpay_order_id },
-        { $set: { status: "failed" } }
+        { $set: { status: "failed" } },
       );
       return res
         .status(400)
         .json({ msg: "Failed to verify payment!", success: false });
     }
     const checkSubscription = await Subscription.findById(
-      checkTxn?.subscriptionId
+      checkTxn?.subscriptionId,
     );
     if (!checkSubscription) {
       await Transaction.updateOne(
         { orderId: razorpay_order_id },
-        { $set: { status: "failed" } }
+        { $set: { status: "failed" } },
       );
       return res
         .status(404)
@@ -361,14 +361,14 @@ exports.applySubscription = async (req, res) => {
     if (!checkUser) {
       await Transaction.updateOne(
         { orderId: razorpay_order_id },
-        { $set: { status: "failed" } }
+        { $set: { status: "failed" } },
       );
       return res.status(404).json({ success: false, msg: "User not found" });
     }
     if (checkUser.isSubscribed == true) {
       await Transaction.updateOne(
         { orderId: razorpay_order_id },
-        { $set: { status: "failed" } }
+        { $set: { status: "failed" } },
       );
       return res
         .status(400)
@@ -382,7 +382,7 @@ exports.applySubscription = async (req, res) => {
     if (activeSubscription) {
       await Transaction.updateOne(
         { orderId: razorpay_order_id },
-        { $set: { status: "failed" } }
+        { $set: { status: "failed" } },
       );
       return res.status(400).json({
         success: false,
@@ -392,7 +392,7 @@ exports.applySubscription = async (req, res) => {
     const subscriptionDate = new Date();
     let expirationDate = new Date(subscriptionDate);
     expirationDate.setMonth(
-      expirationDate.getMonth() + checkSubscription.duration
+      expirationDate.getMonth() + checkSubscription.duration,
     );
     checkUser.isSubscribed = true;
     const result = await SubscribeHistory.create({
@@ -407,7 +407,7 @@ exports.applySubscription = async (req, res) => {
     });
     await Transaction.updateOne(
       { orderId: razorpay_order_id },
-      { $set: { status: "completed" } }
+      { $set: { status: "completed" } },
     );
     checkUser.subscriptionId = result?._id;
     if (result) {
@@ -463,7 +463,7 @@ exports.getSubscriptionHistoryByUserId = async (req, res) => {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
     const result = await SubscribeHistory.find({ userId: id }).populate(
-      "subscriptionId"
+      "subscriptionId",
     );
     if (result) {
       return res.status(200).json({
@@ -495,7 +495,7 @@ exports.changeStatusSubscriptionHistory = async (req, res) => {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
     const checkSubscriptionHistory = await SubscribeHistory.findById(
-      subscriptionHistoryId
+      subscriptionHistoryId,
     );
     if (!checkSubscriptionHistory) {
       return res
@@ -596,7 +596,7 @@ exports.userSubscriptionHistory = async (req, res) => {
     console.log(req.payload.role, filter, "filllllllllllllll");
     const result = await SubscribeHistory.find(filter)
       .sort({ createdAt: -1 })
-      .populate("subscriptionId");
+      .populate("userId subscriptionId");
     if (result) {
       return res.status(200).json({
         success: true,
