@@ -78,7 +78,7 @@ app.get("/upload-user", async (req, res) => {
     });
   }
   const uniqueUsers = Array.from(
-    new Map(users.map((u) => [u.email, u])).values()
+    new Map(users.map((u) => [u.email, u])).values(),
   );
   /* const result = await User.insertMany(uniqueUsers, { ordered: false }).catch(err => {
         console.error("Insert errors (likely duplicates):", err.writeErrors?.length || err);
