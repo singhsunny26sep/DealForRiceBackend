@@ -27,12 +27,10 @@ exports.sendMultipleNotification = async (
       return "No valid FCM tokens found";
     }
     const messageC = {
-      notification: {
-        title: title,
-        body: description,
-      },
       data: {
         type: action,
+        title:title, 
+        body:description, 
       },
       tokens: fcmTokens,
     };
@@ -77,3 +75,4 @@ exports.sendPushNotification = async (userId, { title, body, senderId }) => {
     console.error("Error sending notification:", error);
   }
 };
+
