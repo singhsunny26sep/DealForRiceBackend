@@ -78,12 +78,13 @@ exports.sendMultipleNotification = async (
       return "No valid FCM tokens found";
     }
     console.log("📤 Sending multicast to", fcmTokens.length, "devices");
-    // ✅ DATA-ONLY PAYLOAD (Notifee compatible & multicast-safe)
+    // ✅ ALL DATA VALUES MUST BE STRINGS
     const messageC = {
       data: {
-        type: action,
-        title: title,
-        body: description,
+        type: String(action),
+        title: String(title),
+        body: String(description),
+        targetType: String(targetType ?? ""),
       },
       tokens: fcmTokens,
     };
