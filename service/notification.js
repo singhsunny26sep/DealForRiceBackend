@@ -80,11 +80,30 @@ exports.sendMultipleNotification = async (
     console.log("📤 Sending multicast to", fcmTokens.length, "devices");
     // ✅ ALL DATA VALUES MUST BE STRINGS
     const messageC = {
+      notification: {
+        title: String(title),
+        body: String(description),
+      },
       data: {
         type: String(action),
         title: String(title),
         body: String(description),
         targetType: String(targetType ?? ""),
+      },
+      android: {
+        priority: "high",
+        notification: {
+          channelId: "default",
+          sound: "default",
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: "default",
+            badge: 1,
+          },
+        },
       },
       tokens: fcmTokens,
     };
