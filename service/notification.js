@@ -60,7 +60,6 @@ exports.sendMultipleNotification = async (
   userId,
 ) => {
   try {
-    // 1️⃣ Fetch users
     const users = await User.find({
       _id: { $in: userId },
       role: { $ne: "admin" },
@@ -69,7 +68,6 @@ exports.sendMultipleNotification = async (
       console.log("No users found");
       return "No users found";
     }
-    // 2️⃣ Clean, dedupe & validate FCM tokens
     const fcmTokens = [
       ...new Set(
         users.map((u) => u.fcmToken?.trim()).filter((t) => t && t.length > 100),
@@ -80,51 +78,42 @@ exports.sendMultipleNotification = async (
       return "No valid FCM tokens found";
     }
     console.log("📤 Sending multicast to", fcmTokens.length, "devices");
-    // 3️⃣ Data-only payload (Notifee compatible)
+    // ✅ DATA-ONLY PAYLOAD (Notifee compatible & multicast-safe)
     const messageC = {
       data: {
         type: action,
         title: title,
         body: description,
       },
-      android: {
-        priority: "high",
-      },
       tokens: fcmTokens,
     };
-    // 4️⃣ Send multicast
     const response = await admin.messaging().sendEachForMulticast(messageC);
     console.log("📊 Multicast result:", {
       successCount: response.successCount,
       failureCount: response.failureCount,
     });
-    // 5️⃣ Remove invalid / dead tokens automatically
     response.responses.forEach(async (resp, index) => {
       if (!resp.success) {
-        const errorCode = resp.error?.code;
-        const badToken = fcmTokens[index];
-        console.error("❌ FCM error:", errorCode, badToken);
+        console.error("❌ FCM error:", resp.error?.code, resp.error?.message);
         if (
-          errorCode === "messaging/registration-token-not-registered" ||
-          errorCode === "messaging/invalid-registration-token"
+          resp.error?.code === "messaging/registration-token-not-registered" ||
+          resp.error?.code === "messaging/invalid-registration-token"
         ) {
           await User.updateOne(
-            { fcmToken: badToken },
+            { fcmToken: fcmTokens[index] },
             { $unset: { fcmToken: "" } },
           );
-          console.log("🧹 Removed invalid token from DB");
+          console.log("🧹 Removed invalid token");
         }
       }
     });
-    // 6️⃣ Store notification records (safe mapping)
     const notifications = users.map((user) => ({
       userId: user._id,
       title,
       message: description,
       targetType,
       action,
-      status:
-        user.fcmToken && fcmTokens.includes(user.fcmToken) ? "SENT" : "FAILED",
+      status: fcmTokens.includes(user.fcmToken) ? "SENT" : "FAILED",
     }));
     await Notification.insertMany(notifications);
     console.log("✅ Bulk notification process completed");
