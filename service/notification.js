@@ -78,7 +78,6 @@ exports.sendMultipleNotification = async (
       return "No valid FCM tokens found";
     }
     console.log("📤 Sending multicast to", fcmTokens.length, "devices");
-    // ✅ ALL DATA VALUES MUST BE STRINGS
     const messageC = {
       notification: {
         title: String(title),
@@ -92,18 +91,6 @@ exports.sendMultipleNotification = async (
       },
       android: {
         priority: "high",
-        notification: {
-          channelId: "default",
-          sound: "default",
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "default",
-            badge: 1,
-          },
-        },
       },
       tokens: fcmTokens,
     };
