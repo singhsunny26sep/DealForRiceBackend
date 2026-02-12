@@ -78,53 +78,83 @@ exports.sendMultipleNotification = async (
       return "No valid FCM tokens found";
     }
     console.log("📤 Sending multicast to", fcmTokens.length, "devices");
-    const messageC = {
-      notification: {
-        title: String(title),
-        body: String(description),
-      },
-      data: {
-        type: String(action),
-        title: String(title),
-        body: String(description),
-        targetType: String(targetType ?? ""),
-      },
-      android: {
-        priority: "high",
-      },
-      tokens: fcmTokens,
-    };
-    const response = await admin.messaging().sendEachForMulticast(messageC);
-    console.log("📊 Multicast result:", {
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-    });
-    response.responses.forEach(async (resp, index) => {
-      if (!resp.success) {
-        console.error("❌ FCM error:", resp.error?.code, resp.error?.message);
-        if (
-          resp.error?.code === "messaging/registration-token-not-registered" ||
-          resp.error?.code === "messaging/invalid-registration-token"
-        ) {
-          await User.updateOne(
-            { fcmToken: fcmTokens[index] },
-            { $unset: { fcmToken: "" } },
-          );
-          console.log("🧹 Removed invalid token");
-        }
-      }
-    });
-    const notifications = users.map((user) => ({
-      userId: user._id,
-      title,
-      message: description,
-      targetType,
-      action,
-      status: fcmTokens.includes(user.fcmToken) ? "SENT" : "FAILED",
-    }));
-    await Notification.insertMany(notifications);
+    // const messageC = {
+    //   notification: {
+    //     title: String(title),
+    //     body: String(description),
+    //   },
+    //   data: {
+    //     type: String(action),
+    //     title: String(title),
+    //     body: String(description),
+    //     targetType: String(targetType ?? ""),
+    //   },
+    //   android: {
+    //     priority: "high",
+    //   },
+    //   tokens: fcmTokens,
+    // };
+    // const response = await admin.messaging().sendEachForMulticast(messageC);
+    for (const token of fcmTokens) {
+      const message = {
+        token: token,
+        notification: {
+          title: String(title),
+          body: String(description),
+        },
+        data: {
+          type: String(action),
+          title: String(title),
+          body: String(description),
+          targetType: String(targetType ?? ""),
+        },
+        android: {
+          priority: "high",
+        },
+      };
+      const response = await admin.messaging().send(message);
+      console.log("📤 Sent to token:", token, "Response:", response);
+      // console.log("📊 Multicast result:", {
+      //   successCount: response.successCount,
+      //   failureCount: response.failureCount,
+      // });
+
+      // response.responses.forEach(async (resp, index) => {
+      //   if (!resp.success) {
+      //     console.error("❌ FCM error:", resp.error?.code, resp.error?.message);
+      //     if (
+      //       resp.error?.code === "messaging/registration-token-not-registered" ||
+      //       resp.error?.code === "messaging/invalid-registration-token"
+      //     ) {
+      //       await User.updateOne(
+      //         { fcmToken: fcmTokens[index] },
+      //         { $unset: { fcmToken: "" } },
+      //       );
+      //       console.log("🧹 Removed invalid token");
+      //     }
+      //   }
+      // });
+      // const notifications = users.map((user) => ({
+      //   userId: user._id,
+      //   title,
+      //   message: description,
+      //   targetType,
+      //   action,
+      //   status: fcmTokens.includes(user.fcmToken) ? "SENT" : "FAILED",
+      // }));
+      // await Notification.insertMany(notifications);
+      const notificationRecord = new Notification({
+        userId: users.find((u) => u.fcmToken === token)?._id,
+        title,
+        message: description,
+        targetType,
+        action,
+        status: "SENT",
+      });
+      await notificationRecord.save();
+    }
     console.log("✅ Bulk notification process completed");
-    return response;
+    return "Bulk notification process completed";
   } catch (error) {
     console.error("🔥 Error on sendMultipleNotification:", error);
     return error.message;
