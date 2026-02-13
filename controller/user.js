@@ -38,7 +38,7 @@ exports.checkSubscription = async (req, res) => {
     // If user has a subscription
     if (user?.isSubscribed && user?.subscriptionId) {
       const checkSubscriptionHistory = await SubscribeHistory.findById(
-        user?.subscriptionId
+        user?.subscriptionId,
       );
       if (!checkSubscriptionHistory) {
         return res
@@ -986,6 +986,48 @@ exports.updatePassword = async (req, res) => {
       .json({ success: true, msg: "Password updated successfully!" });
   } catch (error) {
     console.log("error on verifyOTP: ", error);
+    return res
+      .status(500)
+      .json({ error: error, success: false, msg: error.message });
+  }
+};
+
+exports.updateFcmToken = async (req, res) => {
+  try {
+    const bodyUserId = req.body?.userId;
+    const payloadUserId = req.payload?._id;
+    const userId = payloadUserId || bodyUserId;
+    const fcmToken = req.body?.fcmToken;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "userId is required" });
+    }
+    if (!fcmToken) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "fcmToken is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    user.fcmToken = String(fcmToken).trim();
+    await user.save();
+
+    console.log("✅ FCM token updated:", {
+      userId: String(user._id),
+      tokenLength: user.fcmToken?.length,
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, msg: "FCM token updated successfully" });
+  } catch (error) {
+    console.log("error on updateFcmToken: ", error);
     return res
       .status(500)
       .json({ error: error, success: false, msg: error.message });

@@ -29,6 +29,7 @@ const {
   deleteUser,
   forgotPassword,
   updatePassword,
+  updateFcmToken,
 } = require("../controller/user");
 
 userRouter.get("/subscriptionDetails", verifyToken, checkSubscription);
@@ -52,6 +53,7 @@ userRouter.put("/completeProfile/:id", verifyToken, completeProfile);
 userRouter.get("/chat/users", verifyToken, getAllUserForChat);
 userRouter.put("/approve/user/:id", verifyToken, changeStatusUser);
 userRouter.get("/userProfile/:id", verifyToken, singleUser);
+userRouter.post("/update-fcm-token", verifyToken, updateFcmToken);
 userRouter.post("/forgot-password", forgotPassword); // forgot password and send otp in email
 userRouter.put("/update-password", verifyToken, updatePassword); // update password after login
 userRouter.delete("/delete/:id", verifyToken, deleteUser);

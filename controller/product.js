@@ -100,7 +100,6 @@ exports.addProduct = async (req, res) => {
   const image = req.files?.image;
   const id = req.payload?._id; //uesr id of created product
   const trade = req.body?.trade;
-  // console.log("req.body: ", req.body);
   try {
     if (!name) {
       return res.status(400).json({ success: false, msg: "Name is required!" });
