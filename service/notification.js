@@ -39,7 +39,7 @@ exports.sendMultipleNotification = async (
     }
 
     const users = await User.find({
-      _id: { $in: normalizedUserIds },
+      _id: { $nin: normalizedUserIds },
       role: { $ne: "admin" },
     });
     if (!users.length) {
