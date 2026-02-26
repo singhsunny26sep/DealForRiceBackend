@@ -1,29 +1,32 @@
-require("dotenv").config()
-const APIKEY = process.env.api_key_2Factor
-// const TwoFactor = new (require('2factor'))(process.env.api_key_2Factor)
-const TwoFactor = new (require('2factor'))(APIKEY)
-var axios = require('axios');
-
+require("dotenv").config();
+const APIKEY = process.env.TWO_FACTOR_KEY;
+// const TwoFactor = new (require('2factor'))(process.env.TWO_FACTOR_KEY)
+const TwoFactor = new (require("2factor"))(APIKEY);
+var axios = require("axios");
 
 exports.sendOTP = async (mobile) => {
-    // TwoFactor.sendOTP(`+91${mobile}`, { otp: "1234", template: "riceDealOTP" }).then((sessionId) => {
-    TwoFactor.sendOTP(mobile, { otp: "1234", template: "riceDealOTP" }).then((sessionId) => {
-        console.log("sessionId: ", sessionId)
-        return sessionId
-    }, (error) => {
-        console.log("error: ", error)
-    })
-}
-
+  // TwoFactor.sendOTP(`+91${mobile}`, { otp: "1234", template: "riceDealOTP" }).then((sessionId) => {
+  TwoFactor.sendOTP(mobile, { otp: "1234", template: "riceDealOTP" }).then(
+    (sessionId) => {
+      console.log("sessionId: ", sessionId);
+      return sessionId;
+    },
+    (error) => {
+      console.log("error: ", error);
+    },
+  );
+};
 
 exports.verifyOTP = async (sessionId, otp) => {
-    TwoFactor.verifyOTP(sessionId, otp).then((response) => {
-        console.log("response: ", response)
-    }, (error) => {
-        console.log("error: ", error)
-    })
-}
-
+  TwoFactor.verifyOTP(sessionId, otp).then(
+    (response) => {
+      console.log("response: ", response);
+    },
+    (error) => {
+      console.log("error: ", error);
+    },
+  );
+};
 
 /* exports.urlSendTestOtp = async (mobile) => {
     var config = {
@@ -41,24 +44,23 @@ exports.verifyOTP = async (sessionId, otp) => {
 } */
 
 exports.urlSendTestOtp = async (mobile) => {
-    try {
-        var config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            // url: `https://2factor.in/API/V1/${APIKEY}/SMS/+91${mobile}/AUTOGEN/OTP1`,
-            url: `https://2factor.in/API/V1/${APIKEY}/SMS/${mobile}/AUTOGEN/OTP1`,
-            headers: {}
-        };
+  try {
+    var config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      // url: `https://2factor.in/API/V1/${APIKEY}/SMS/+91${mobile}/AUTOGEN/OTP1`,
+      url: `https://2factor.in/API/V1/${APIKEY}/SMS/${mobile}/AUTOGEN/OTP1`,
+      headers: {},
+    };
 
-        const response = await axios(config);
-        // console.log("response: ", response.data);
-        return response.data; // Return actual response data
-    } catch (error) {
-        console.log("error: ", error);
-        throw error; // Ensure the error is propagated
-    }
+    const response = await axios(config);
+    // console.log("response: ", response.data);
+    return response.data; // Return actual response data
+  } catch (error) {
+    console.log("error: ", error);
+    throw error; // Ensure the error is propagated
+  }
 };
-
 
 /* exports.urlVerifyOtp = async (sessionId, otp) => {
     var config = {
@@ -78,19 +80,19 @@ exports.urlSendTestOtp = async (mobile) => {
 } */
 
 exports.urlVerifyOtp = async (sessionId, otp) => {
-    try {
-        const config = {
-            method: 'get',
-            maxBodyLength: Infinity,
-            url: `https://2factor.in/API/V1/${APIKEY}/SMS/VERIFY/${sessionId}/${otp}`,
-            headers: {}
-        };
+  try {
+    const config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: `https://2factor.in/API/V1/${APIKEY}/SMS/VERIFY/${sessionId}/${otp}`,
+      headers: {},
+    };
 
-        const response = await axios(config);
-        // console.log("Response: ", response.data);
-        return response.data; // Return the actual data
-    } catch (error) {
-        console.log("Error: ", error.message);
-        throw error; // Ensure the error is propagated
-    }
+    const response = await axios(config);
+    // console.log("Response: ", response.data);
+    return response.data; // Return the actual data
+  } catch (error) {
+    console.log("Error: ", error.message);
+    throw error; // Ensure the error is propagated
+  }
 };

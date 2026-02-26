@@ -1,30 +1,21 @@
 const { v2: cloudinary } = require("cloudinary");
 require("dotenv").config();
 
-// Cloudinary configuration
 cloudinary.config({
-  cloud_name: process.env.cloud_name, // Replace with your Cloudinary cloud name
-  api_key: process.env.api_key, // Replace with your API key
-  api_secret: process.env.api_secret, // Replace with your API secret
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_SECRET_KEY,
 });
 
 exports.uploadToCloudinary = async (imagePath) => {
-  // console.log("=========================== uploadToCloudinary ========================");
-
   try {
     const uploadResult = await cloudinary.uploader.upload(imagePath, {
       resource_type: "image", // Ensure it's treated as an image
     });
-    // console.log("uplaodResult: ", uploadResult);
-
-    // Generate an optimized URL
     const optimizedUrl = cloudinary.url(uploadResult.public_id, {
       fetch_format: "auto",
       quality: "auto",
     });
-    // console.log("optimizedUrl: ", optimizedUrl);
-
-    // return { url: optimizedUrl, public_id: uploadResult.public_id };
     return optimizedUrl;
   } catch (error) {
     console.error("Cloudinary Upload Error:", error);
