@@ -196,7 +196,7 @@ exports.singleUser = async (req, res) => {
 exports.getAllUserByTrad = async (req, res) => {
   const id = req.params?.id; //trade id
   try {
-    const result = await User.find({ trade: id })
+    const result = await User.find({ trade: id, isDeleted: false })
       .select("-password -role")
       .sort({ createdAt: -1 })
       .populate("trade");
@@ -323,6 +323,13 @@ exports.completeProfile = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Failed to register!" });
     }
+    if (!mobile) {
+      return res.status(400).json({
+        success: false,
+        msg: "Mobile number is required",
+      });
+    }
+    checkUser.mobile = mobile;
     /* if (role) {
             if (role === "admin") {
                 return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
@@ -335,7 +342,6 @@ exports.completeProfile = async (req, res) => {
     if (mongoose.Types.ObjectId.isValid(trade)) {
       checkUser.trade = trade;
     }
-    if (mobile) checkUser.mobile = mobile;
     if (city) checkUser.city = city;
     if (state) checkUser.state = state;
     if (country) checkUser.country = country;
@@ -738,7 +744,7 @@ exports.userUpdate = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const result = await User.find({ role: "user" })
+    const result = await User.find({ role: "user", isDeleted: false })
       .sort({ createdAt: -1 })
       .select("-password -role -__v");
     if (result) {
@@ -764,7 +770,7 @@ exports.getAllUserForChat = async (req, res) => {
   const country = req.query?.country;
   const address = req.query?.address;
   try {
-    const matchQuery = { role: "user", _id: { $ne: userId } };
+    const matchQuery = { role: "user", isDeleted: false, _id: { $ne: userId } };
     if (tradeId) {
       matchQuery.trade = new mongoose.Types.ObjectId(tradeId);
     }
