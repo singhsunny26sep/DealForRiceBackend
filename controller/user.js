@@ -74,6 +74,7 @@ exports.dashboardDetails = async (req, res) => {
       user,
       active,
       inactive,
+      deletedUser,
       subscribedUser,
       product,
       trade,
@@ -82,10 +83,15 @@ exports.dashboardDetails = async (req, res) => {
       transactionPending,
       transactionCancelled,
     ] = await Promise.all([
-      User.countDocuments({ role: "user" }),
-      User.countDocuments({ role: "user", isActive: true }),
-      User.countDocuments({ role: "user", isActive: false }),
-      User.countDocuments({ role: "user", isSubscribed: true }),
+      User.countDocuments({ role: "user", isDeleted: false }),
+      User.countDocuments({ role: "user", isActive: true, isDeleted: false }),
+      User.countDocuments({ role: "user", isActive: false, isDeleted: false }),
+      User.countDocuments({ role: "user", isDeleted: true }),
+      User.countDocuments({
+        role: "user",
+        isSubscribed: true,
+        isDeleted: false,
+      }),
       Product.countDocuments(),
       Trade.countDocuments(),
       SubscribeHistory.countDocuments({ status: "active" }),
@@ -100,6 +106,7 @@ exports.dashboardDetails = async (req, res) => {
       user,
       active,
       inactive,
+      deletedUser,
       subscribedUser,
       product,
       trade,
@@ -388,12 +395,12 @@ exports.loginUser = async (req, res) => {
         msg: "Email not register yet please register first with mobile number",
       });
     }
-    if (checkUser.isActive == false) {
-      return res.status(401).json({
-        success: false,
-        msg: "Account is not active. Please contact with admin.",
-      });
-    }
+    // if (checkUser.isActive == false) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     msg: "Account is not active. Please contact with admin.",
+    //   });
+    // }
     const matchedPass = await bcrypt.compare(password, checkUser.password);
     if (!matchedPass) {
       return res
@@ -554,12 +561,12 @@ exports.mobileLogin = async (req, res) => {
     if (!checkUser) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
-    if (checkUser.role !== "admin" && checkUser.isActive == false) {
-      return res.status(401).json({
-        success: false,
-        msg: "Account is not active. Please contact with admin.",
-      });
-    }
+    // if (checkUser.role !== "admin" && checkUser.isActive == false) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     msg: "Account is not active. Please contact with admin.",
+    //   });
+    // }
     const matchedPass = await bcrypt.compare(password, checkUser.password);
     if (!matchedPass) {
       return res
@@ -594,12 +601,12 @@ exports.verifyOTPAPI = async (req, res) => {
     if (!checkUser) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
-    if (checkUser.role !== "admin" && checkUser.isActive == false) {
-      return res.status(401).json({
-        success: false,
-        msg: "Account is not active. Please contact with admin.",
-      });
-    }
+    // if (checkUser.role !== "admin" && checkUser.isActive == false) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     msg: "Account is not active. Please contact with admin.",
+    //   });
+    // }
     let result = await urlVerifyOtp(sessionId, otp);
     if (fcmToken && result?.Status == "Success") {
       checkUser.fcmToken = fcmToken;
@@ -640,12 +647,12 @@ exports.verifyOTPWithEmail = async (req, res) => {
     if (isExpired) {
       return res.status(410).json({ success: false, msg: "OTP expired" });
     }
-    if (checkUser.role !== "admin" && checkUser.isActive == false) {
-      return res.status(401).json({
-        success: false,
-        msg: "Account is not active. Please contact with admin.",
-      });
-    }
+    // if (checkUser.role !== "admin" && checkUser.isActive == false) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     msg: "Account is not active. Please contact with admin.",
+    //   });
+    // }
     if (checkUser?.otp?.code?.toString() !== otp.toString()) {
       return res.status(400).json({ success: false, msg: "Invalid OTP" });
     } else {
