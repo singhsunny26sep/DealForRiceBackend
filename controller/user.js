@@ -231,9 +231,10 @@ exports.registorUser = async (req, res) => {
   const fcmToken = req.body?.fcmToken;
   const image = req.files?.image;
   try {
-    let user;
+    let user = null;
+    let deletedUser = null;
     if (email) {
-      user = await User.findOne({ email });
+      user = await User.findOne({ email, role, isDeleted: false });
       if (user) {
         return res.status(400).json({
           error: "Email already exists",
@@ -241,8 +242,9 @@ exports.registorUser = async (req, res) => {
           msg: "Email already exists",
         });
       }
-    } else if (!user && mobile) {
-      user = await User.findOne({ mobile });
+      deletedUser = await User.findOne({ email, role, isDeleted: true });
+    } else if (!user && !deletedUser && mobile) {
+      user = await User.findOne({ mobile, role, isDeleted: false });
       if (user) {
         return res.status(400).json({
           error: "Mobile number already exists",
@@ -250,6 +252,7 @@ exports.registorUser = async (req, res) => {
           msg: "Mobile number already exists",
         });
       }
+      deletedUser = await User.findOne({ mobile, role, isDeleted: true });
     }
     const hashedPass = await bcrypt.hash(password, parseInt(salt));
     if (!hashedPass) {
@@ -257,37 +260,55 @@ exports.registorUser = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Failed to register!" });
     }
-    user = new User({ name, email, mobile, role, password: hashedPass });
-    if (mongoose.Types.ObjectId.isValid(trade)) user.trade = trade;
-    if (city) user.city = city;
-    if (state) user.state = state;
-    if (fcmToken) user.fcmToken = fcmToken;
-    if (image) {
-      let imageUrl = await uploadToCloudinary(image.tempFilePath);
-      user.image = imageUrl;
-    }
-    user = await user.save();
-    const freePlan = await Subscription.findOne({
-      name: "Free for all trades",
-    });
-    if (!freePlan) {
-      user.isSubscribed = false;
-      user.subscriptionId = null;
+    if (deletedUser) {
+      deletedUser.name = name;
+      deletedUser.password = hashedPass;
+      deletedUser.trade = trade;
+      deletedUser.city = city;
+      deletedUser.state = state;
+      deletedUser.fcmToken = fcmToken;
+      if (image) {
+        let imageUrl = await uploadToCloudinary(image.tempFilePath);
+        deletedUser.image = imageUrl;
+      }
+      deletedUser.isDeleted = false;
+      deletedUser.isSubscribed = false;
+      deletedUser.subscriptionId = null;
+      deletedUser.isActive = true;
+      user = await deletedUser.save();
+    } else {
+      user = new User({ name, email, mobile, role, password: hashedPass });
+      if (mongoose.Types.ObjectId.isValid(trade)) user.trade = trade;
+      if (city) user.city = city;
+      if (state) user.state = state;
+      if (fcmToken) user.fcmToken = fcmToken;
+      if (image) {
+        let imageUrl = await uploadToCloudinary(image.tempFilePath);
+        user.image = imageUrl;
+      }
+      user = await user.save();
+      const freePlan = await Subscription.findOne({
+        name: "Free for all trades",
+      });
+      if (!freePlan) {
+        user.isSubscribed = false;
+        user.subscriptionId = null;
+        user = await user.save();
+      }
+      let freeTrialEndDate = new Date(user.createdAt);
+      freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7);
+      const applyFreeTrial = await SubscribeHistory.create({
+        userId: user?._id,
+        subscriptionId: freePlan?._id,
+        endDate: freeTrialEndDate,
+        duration: freePlan?.duration,
+        amount: freePlan?.amount,
+        status: "active",
+      });
+      user.subscriptionId = applyFreeTrial?._id;
+      user.isSubscribed = true;
       user = await user.save();
     }
-    let freeTrialEndDate = new Date(user.createdAt);
-    freeTrialEndDate.setDate(freeTrialEndDate.getDate() + 7);
-    const applyFreeTrial = await SubscribeHistory.create({
-      userId: user?._id,
-      subscriptionId: freePlan?._id,
-      endDate: freeTrialEndDate,
-      duration: freePlan?.duration,
-      amount: freePlan?.amount,
-      status: "active",
-    });
-    user.subscriptionId = applyFreeTrial?._id;
-    user.isSubscribed = true;
-    user = await user.save();
     const token = await generateToken(user);
     return res.status(200).json({
       success: true,
@@ -431,7 +452,16 @@ exports.loginWithMobile = async (req, res) => {
   try {
     let isFirst = false;
     let user;
-    user = await User.findOne({ mobile, role });
+    let deletedUser;
+    user = await User.findOne({ mobile, role, isDeleted: false });
+    deletedUser = await User.findOne({ mobile, role, isDeleted: true });
+    if (deletedUser && !user) {
+      deletedUser.isDeleted = false;
+      deletedUser.isSubscribed = false;
+      deletedUser.subscriptionId = null;
+      deletedUser.isActive = true;
+      user = await deletedUser.save();
+    }
     if (!user) {
       const hashedPass = await bcrypt.hash("123456", parseInt(salt));
       if (!hashedPass) {
@@ -499,7 +529,16 @@ exports.loginOrSignInWithEmail = async (req, res) => {
   try {
     let isFirst = false;
     let user;
-    user = await User.findOne({ email, role });
+    let deletedUser;
+    user = await User.findOne({ email, role, isDeleted: false });
+    deletedUser = await User.findOne({ email, role, isDeleted: true });
+    if (deletedUser && !user) {
+      deletedUser.isDeleted = false;
+      deletedUser.isSubscribed = false;
+      deletedUser.subscriptionId = null;
+      deletedUser.isActive = true;
+      user = await deletedUser.save();
+    }
     if (!user) {
       const hashedPass = await bcrypt.hash("123456", parseInt(salt));
       if (!hashedPass) {
@@ -597,7 +636,7 @@ exports.verifyOTPAPI = async (req, res) => {
   const fcmToken = req.body?.fcmToken;
   const isFirst = req.body?.isFirst;
   try {
-    const checkUser = await User.findOne({ mobile, role });
+    const checkUser = await User.findOne({ mobile, role, isDeleted: false });
     if (!checkUser) {
       return res.status(404).json({ success: false, msg: "User not found" });
     }
@@ -637,7 +676,7 @@ exports.verifyOTPWithEmail = async (req, res) => {
     let { otp, email, fcmToken, isFirst, role } = req.body;
     email = email?.toLowerCase();
     role = role?.toLowerCase() || "user";
-    const checkUser = await User.findOne({ email, role });
+    const checkUser = await User.findOne({ email, role, isDeleted: false });
     if (!checkUser || !checkUser.otp || !checkUser.otp.code) {
       return res
         .status(404)
