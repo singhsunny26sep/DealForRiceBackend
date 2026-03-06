@@ -204,7 +204,7 @@ exports.getAllUserByTrad = async (req, res) => {
   const id = req.params?.id; //trade id
   try {
     const result = await User.find({ trade: id, isDeleted: false })
-      .select("-password -role")
+      .select("-password -role -__v -otp -fcmToken -isDeleted")
       .sort({ createdAt: -1 })
       .populate("trade");
     if (result) {
@@ -752,8 +752,8 @@ exports.userUpdate = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const result = await User.find({ role: "user", isDeleted: false })
-      .sort({ createdAt: -1 })
-      .select("-password -role -__v");
+      .select("-password -role -__v -otp -fcmToken -isDeleted")
+      .sort({ createdAt: -1 });
     if (result) {
       return res.status(200).json({ success: true, result });
     }
