@@ -273,8 +273,15 @@ exports.registorUser = async (req, res) => {
       }
       deletedUser.isDeleted = false;
       deletedUser.isSubscribed = false;
-      deletedUser.subscriptionId = null;
       deletedUser.isActive = true;
+      const checkSubscriptionHistory = await SubscribeHistory.findById(
+        deletedUser?.subscriptionId,
+      );
+      if (checkSubscriptionHistory) {
+        checkSubscriptionHistory.status = "inactive";
+        await checkSubscriptionHistory.save();
+      }
+      deletedUser.subscriptionId = null;
       user = await deletedUser.save();
     } else {
       user = new User({ name, email, mobile, role, password: hashedPass });
@@ -288,7 +295,7 @@ exports.registorUser = async (req, res) => {
       }
       user = await user.save();
       const freePlan = await Subscription.findOne({
-        name: "Free for all trades",
+        name: "free",
       });
       if (!freePlan) {
         user.isSubscribed = false;
@@ -458,8 +465,15 @@ exports.loginWithMobile = async (req, res) => {
     if (deletedUser && !user) {
       deletedUser.isDeleted = false;
       deletedUser.isSubscribed = false;
-      deletedUser.subscriptionId = null;
       deletedUser.isActive = true;
+      const checkSubscriptionHistory = await SubscribeHistory.findById(
+        deletedUser?.subscriptionId,
+      );
+      if (checkSubscriptionHistory) {
+        checkSubscriptionHistory.status = "inactive";
+        await checkSubscriptionHistory.save();
+      }
+      deletedUser.subscriptionId = null;
       user = await deletedUser.save();
     }
     if (!user) {
@@ -471,7 +485,7 @@ exports.loginWithMobile = async (req, res) => {
       }
       user = new User({ mobile, role, password: hashedPass });
       const freePlan = await Subscription.findOne({
-        name: "Free for all trades",
+        name: "free",
       });
       if (!freePlan) {
         user.isSubscribed = false;
@@ -535,8 +549,15 @@ exports.loginOrSignInWithEmail = async (req, res) => {
     if (deletedUser && !user) {
       deletedUser.isDeleted = false;
       deletedUser.isSubscribed = false;
-      deletedUser.subscriptionId = null;
       deletedUser.isActive = true;
+      const checkSubscriptionHistory = await SubscribeHistory.findById(
+        deletedUser?.subscriptionId,
+      );
+      if (checkSubscriptionHistory) {
+        checkSubscriptionHistory.status = "inactive";
+        await checkSubscriptionHistory.save();
+      }
+      deletedUser.subscriptionId = null;
       user = await deletedUser.save();
     }
     if (!user) {
@@ -548,7 +569,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
       }
       user = new User({ email, role, password: hashedPass });
       const freePlan = await Subscription.findOne({
-        name: "Free for all trades",
+        name: "free",
       });
       if (!freePlan) {
         user.isSubscribed = false;

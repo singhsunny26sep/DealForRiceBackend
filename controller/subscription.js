@@ -106,9 +106,9 @@ exports.subscriptionListWithUser = async (req, res) => {
 };
 
 exports.addSubscription = async (req, res) => {
-  const name = req.body?.name;
+  const name = req.body?.name?.toLowerCase();
   const amount = req.body?.amount;
-  const description = req.body?.description;
+  const description = req.body?.description?.toLowerCase();
   const duration = req.body?.duration;
   const trade = req.body?.trade;
   try {
@@ -141,9 +141,9 @@ exports.addSubscription = async (req, res) => {
 
 exports.updateSubscription = async (req, res) => {
   const id = req.params?.id;
-  const name = req.body?.name;
+  const name = req.body?.name?.toLowerCase();
   const amount = req.body?.amount;
-  const description = req.body?.description;
+  const description = req.body?.description?.toLowerCase();
   const duration = req.body?.duration;
   const trade = req.body?.trade;
   try {
