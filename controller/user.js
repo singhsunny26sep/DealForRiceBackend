@@ -358,13 +358,20 @@ exports.completeProfile = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Failed to register!" });
     }
-    if (!mobile) {
-      return res.status(400).json({
-        success: false,
-        msg: "Mobile number is required",
+    if (mobile) {
+      const existingUser = await User.findOne({
+        mobile,
+        role: checkUser.role,
+        _id: { $ne: id },
       });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          msg: "Mobile number already exists with another account",
+        });
+      }
+      checkUser.mobile = mobile;
     }
-    checkUser.mobile = mobile;
     /* if (role) {
             if (role === "admin") {
                 return res.status(400).json({ success: false, msg: "Admin role is not allowed" });
@@ -372,7 +379,20 @@ exports.completeProfile = async (req, res) => {
         } */
     // const user = new User({ name, email, password: hashedPass })
     if (name) checkUser.name = name;
-    if (email) checkUser.email = email;
+    if (email) {
+      const existingUser = await User.findOne({
+        email,
+        role: checkUser.role,
+        _id: { $ne: id },
+      });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          msg: "Email already exists with another account",
+        });
+      }
+      checkUser.email = email;
+    }
     if (password) checkUser.password = hashedPass;
     if (mongoose.Types.ObjectId.isValid(trade)) {
       checkUser.trade = trade;
@@ -385,7 +405,7 @@ exports.completeProfile = async (req, res) => {
       let imageUrl = await uploadToCloudinary(image.tempFilePath);
       checkUser.image = imageUrl;
     }
-    checkUser.isSubscribed = true;
+    // checkUser.isSubscribed = true;
     const result = await checkUser.save();
     if (result) {
       const token = await generateToken(result);
@@ -466,6 +486,7 @@ exports.loginWithMobile = async (req, res) => {
       deletedUser.isDeleted = false;
       deletedUser.isSubscribed = false;
       deletedUser.isActive = true;
+      isFirst = true;
       const checkSubscriptionHistory = await SubscribeHistory.findById(
         deletedUser?.subscriptionId,
       );
@@ -507,7 +528,7 @@ exports.loginWithMobile = async (req, res) => {
       user = await user.save();
       isFirst = true;
     }
-    if (!user.trade) isFirst = true;
+    if (!user?.trade) isFirst = true;
     user.countryShortName = countryShortName;
     user.countryCode = countryCode;
     await user.save();
@@ -550,6 +571,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
       deletedUser.isDeleted = false;
       deletedUser.isSubscribed = false;
       deletedUser.isActive = true;
+      isFirst = true;
       const checkSubscriptionHistory = await SubscribeHistory.findById(
         deletedUser?.subscriptionId,
       );
@@ -591,7 +613,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
       user = await user.save();
       isFirst = true;
     }
-    if (!user.trade) isFirst = true;
+    if (!user?.trade) isFirst = true;
     user.otp = updatedData;
     user.countryShortName = countryShortName;
     user.countryCode = countryCode;
