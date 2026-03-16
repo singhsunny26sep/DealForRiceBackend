@@ -18,7 +18,7 @@ const SubscribeHistorySchema = new mongoose.Schema(
       default: "active",
     },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 module.exports = mongoose.model("SubscribeHistory", SubscribeHistorySchema);

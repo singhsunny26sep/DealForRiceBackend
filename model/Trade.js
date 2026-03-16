@@ -1,20 +1,13 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const TradeSchema = new mongoose.Schema({
-    name: {
-        type: String,
-    },
-    description: {
-        type: String
-    },
-    tradeType: {
-        type: String
-    },
-    image: {
-        type: String
-    }
-}, { timestamps: true })
+const TradeSchema = new mongoose.Schema(
+  {
+    name: { type: String },
+    description: { type: String },
+    tradeType: { type: String },
+    image: { type: String },
+  },
+  { timestamps: true, versionKey: false },
+);
 
-
-const Trade = mongoose.model('Trade', TradeSchema)
-module.exports = Trade
+module.exports = mongoose.model("Trade", TradeSchema);
