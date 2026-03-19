@@ -343,6 +343,8 @@ exports.completeProfile = async (req, res) => {
   const country = req.body?.country;
   const shopName = req.body?.shopName;
   const image = req.files?.image;
+  const currentScreen = req.body?.currentScreen;
+  const isProfileCompleted = req.body?.isProfileCompleted;
   try {
     const checkUser = await User.findById(id);
     if (!checkUser) {
@@ -401,6 +403,10 @@ exports.completeProfile = async (req, res) => {
     if (state) checkUser.state = state;
     if (country) checkUser.country = country;
     if (shopName) checkUser.shopName = shopName;
+    if (typeof isProfileCompleted === "boolean") {
+      checkUser.isProfileCompleted = isProfileCompleted;
+    }
+    if (currentScreen) checkUser.currentScreen = currentScreen;
     if (image) {
       let imageUrl = await uploadToCloudinary(image.tempFilePath);
       checkUser.image = imageUrl;
@@ -476,6 +482,7 @@ exports.loginWithMobile = async (req, res) => {
   const role = req.body?.role?.toLowerCase() || "user";
   const countryShortName = req.body?.countryShortName;
   const countryCode = req.body?.countryCode;
+  const currentScreen = req.body?.currentScreen;
   try {
     let isFirst = false;
     let user;
@@ -531,6 +538,7 @@ exports.loginWithMobile = async (req, res) => {
     if (!user?.trade) isFirst = true;
     user.countryShortName = countryShortName;
     user.countryCode = countryCode;
+    user.currentScreen = currentScreen;
     await user.save();
     let result = await urlSendTestOtp(mobile);
     if (result.Status == "Success") {
@@ -557,6 +565,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
   const role = req.body?.role?.toLowerCase() || "user";
   const countryShortName = req.body?.countryShortName;
   const countryCode = req.body?.countryCode;
+  const currentScreen = req.body?.currentScreen;
   const updatedData = {
     code: Math.floor(100000 + Math.random() * 900000).toString(),
     expiresAt: new Date(Date.now() + 5 * 60 * 1000),
@@ -617,6 +626,7 @@ exports.loginOrSignInWithEmail = async (req, res) => {
     user.otp = updatedData;
     user.countryShortName = countryShortName;
     user.countryCode = countryCode;
+    user.currentScreen = currentScreen;
     await user.save();
     let result = sendEmailOtp(email, updatedData.code);
     return res.status(200).json({
@@ -678,6 +688,7 @@ exports.verifyOTPAPI = async (req, res) => {
   const role = req.body?.role?.toLowerCase() || "user";
   const fcmToken = req.body?.fcmToken;
   const isFirst = req.body?.isFirst;
+  const currentScreen = req.body?.currentScreen;
   try {
     const checkUser = await User.findOne({ mobile, role, isDeleted: false });
     if (!checkUser) {
@@ -692,6 +703,10 @@ exports.verifyOTPAPI = async (req, res) => {
     let result = await urlVerifyOtp(sessionId, otp);
     if (fcmToken && result?.Status == "Success") {
       checkUser.fcmToken = fcmToken;
+      await checkUser.save();
+    }
+    if (currentScreen) {
+      checkUser.currentScreen = currentScreen;
       await checkUser.save();
     }
     if (result?.Status == "Success") {
@@ -716,7 +731,7 @@ exports.verifyOTPAPI = async (req, res) => {
 
 exports.verifyOTPWithEmail = async (req, res) => {
   try {
-    let { otp, email, fcmToken, isFirst, role } = req.body;
+    let { otp, email, fcmToken, isFirst, role, currentScreen } = req.body;
     email = email?.toLowerCase();
     role = role?.toLowerCase() || "user";
     const checkUser = await User.findOne({ email, role, isDeleted: false });
@@ -740,6 +755,10 @@ exports.verifyOTPWithEmail = async (req, res) => {
     } else {
       if (fcmToken) {
         checkUser.fcmToken = fcmToken;
+        await checkUser.save();
+      }
+      if (currentScreen) {
+        checkUser.currentScreen = currentScreen;
         await checkUser.save();
       }
       const token = await generateToken(checkUser);

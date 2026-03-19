@@ -31,11 +31,13 @@ const UserSchema = new mongoose.Schema(
     lastMessageTime: Date,
     unreadCount: { type: Number, default: 0 },
     isOnline: { type: Boolean, default: false },
+    currentScreen: { type: String },
+    isProfileCompleted: { type: Boolean, default: false },
     isSubscribed: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
 module.exports = mongoose.model("User", UserSchema);
