@@ -12,6 +12,7 @@ if (!admin.apps.length) {
 exports.sendMultipleNotification = async (
   title,
   description,
+  bannerUrl,
   action,
   targetType,
   userId,
@@ -26,6 +27,7 @@ exports.sendMultipleNotification = async (
     const debugMeta = {
       title: String(title ?? ""),
       description: String(description ?? ""),
+      bannerUrl: String(bannerUrl ?? ""),
       action: String(action ?? ""),
       targetType: String(targetType ?? ""),
       userIdType: Array.isArray(userId) ? "array" : typeof userId,
@@ -73,6 +75,7 @@ exports.sendMultipleNotification = async (
         type: String(action ?? "general"),
         title: String(title ?? ""),
         body: String(description ?? ""),
+        bannerUrl: String(bannerUrl ?? ""),
         targetType: String(targetType ?? ""),
       },
       android: {
@@ -135,6 +138,7 @@ exports.sendMultipleNotification = async (
         userId: mappedUserId,
         title,
         message: description,
+        image: String(bannerUrl ?? ""),
         targetType,
         action,
         status: r.success ? "SENT" : "FAILED",

@@ -109,16 +109,30 @@ exports.addProduct = async (req, res) => {
         .status(400)
         .json({ success: false, msg: "Price is required!" });
     }
-    const product = new Product({ name, description, price, user: id });
-    if (image) {
-      let imageUrl = await uploadToCloudinary(image.tempFilePath);
-      product.image = imageUrl;
+    if (!image) {
+      return res
+        .status(400)
+        .json({ success: false, msg: "Image is required!" });
     }
+    const imageUrl = await uploadToCloudinary(image.tempFilePath);
+    const product = new Product({
+      name,
+      description,
+      price,
+      user: id,
+      image: imageUrl,
+    });
     if (mongoose.Types.ObjectId.isValid(trade)) product.trade = trade;
-
     const result = await product.save();
     if (result) {
-      await sendMultipleNotification(name, description, "added", "Product", id);
+      await sendMultipleNotification(
+        name,
+        description,
+        imageUrl,
+        "added",
+        "Product",
+        id,
+      );
       return res
         .status(200)
         .json({ success: true, msg: "Product added successfully", result });
